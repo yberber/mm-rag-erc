@@ -2,6 +2,7 @@ import argparse
 import subprocess
 from pathlib import Path
 from typing import List, Tuple
+import os
 
 from tqdm import tqdm
 
@@ -18,15 +19,32 @@ def collect_mp4_jobs(root: Path) -> List[Tuple[Path, Path]]:
     for in_name, out_name in SPLITS:
         in_split = root / in_name
         out_split = root / out_name
-        if not in_split.exists():
-            continue
+        # if not in_split.exists():
+        #     continue
         out_split.mkdir(parents=True, exist_ok=True)
-        # Gather .mp4 files directly in the split directory (no subfolders)
-        for ext in ("*.mp4", "*.MP4", "*.m4v", "*.M4V"):
-            for mp4 in in_split.glob(ext):
+        # every record follows the pattern "dia*.mp4"
+        # except 132 records in test split which has the pattern "final_videos_testdia*.mp4"
+        # Note that the final video records fixes some issues in the initial records
+        pattern = "dia*.mp4"
+        if in_name == "test_splits":
+            for mp4 in in_split.glob(pattern):
+                wav_name = mp4.stem + ".wav"
+                final_record_path = in_split/ str("final_videos_test" + mp4.stem + ".mp4")
+                if os.path.isfile(final_record_path):
+                    mp4 = final_record_path
+                wav_path = out_split / wav_name
+                jobs.append((mp4, wav_path))
+        else:
+            for mp4 in in_split.glob(pattern):
                 wav_name = mp4.stem + ".wav"
                 wav_path = out_split / wav_name
                 jobs.append((mp4, wav_path))
+        if in_name == "test_splits":
+            final_pattern = "final_videos_testdia*.mp4"
+            for mp4 in in_split.glob(final_pattern):
+                wav_name = mp4.stem + ".wav"
+                wav_path = out_split / wav_name
+
     return jobs
 
 

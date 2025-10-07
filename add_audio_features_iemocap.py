@@ -65,7 +65,7 @@ def main():
     parser.add_argument("--csv", type=Path, default=Path("iemocap_erc.csv"))
     parser.add_argument("--root", type=Path, default=Path("/Users/yusuf/Data/IEMOCAP_full_release"))
     parser.add_argument("--out", type=Path, default=Path("iemocap_erc_acoustic_features.csv"))
-    parser.add_argument("--limit", type=int, default=25, help="Optional limit of rows for quick tests")
+    parser.add_argument("--limit", type=int, default=None, help="Optional limit of rows for quick tests")
     args = parser.parse_args()
 
     df = pd.read_csv(args.csv)

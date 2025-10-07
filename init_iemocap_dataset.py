@@ -9,18 +9,19 @@ import pandas as pd
 
 
 EMO_MAP = {
-    "ang": "angry",
-    "hap": "happy",
-    "sad": "sad",
+    "ang": "anger",
+    "hap": "happiness",
+    "sad": "sadness",
     "neu": "neutral",
-    "exc": "excited",
-    "fru": "frustrated",
-    "fea": "fearful",
-    "sur": "surprised",
-    "dis": "disgusted",
+    "exc": "excitement",
+    "fru": "frustration",
+    "fea": "fear",
+    "sur": "surprise",
+    "dis": "disgust",
     "oth": "other",
     "xxx": "unknown",
 }
+
 
 
 EVAL_LINE_RE = re.compile(
@@ -170,7 +171,8 @@ def build_dataframe(root: Path) -> pd.DataFrame:
                 "emotion": u.emotion,
                 "utterance": u.utterance,
                 "dialog_type": u.dialog_type,
-                "marker_gender": u.marker_gender,
+                "gender": u.speaker,
+                "marker_gender": u.marker_gender
             }
             for u in rows
         ]
@@ -217,7 +219,7 @@ def build_dataframe(root: Path) -> pd.DataFrame:
 
     # Reorder columns so dialog_idx follows dialog_id; split as first column
     desired = [
-        "dataset",
+        # "dataset",
         "split",
         "session",
         "dialog_id",
@@ -225,14 +227,14 @@ def build_dataframe(root: Path) -> pd.DataFrame:
         "turn_id",
         "turn_idx",
         "speaker",
-        "start",
-        "end",
+        # "start",
+        # "end",
         "emotion_code",
         "emotion",
         "erc_target",
         "utterance",
         "dialog_type",
-        "marker_gender",
+        "gender",
     ]
     df = df[desired]
     return df
@@ -260,7 +262,10 @@ def main():
     # Small summary for sanity check
     by_emo = df["emotion_code"].value_counts().to_dict()
     print(f"Rows: {len(df)} | Dialogs: {df['dialog_id'].nunique()} | Sessions: {df['session'].nunique()}")
-    print("Emotions counts:", by_emo)
+    print(f"Emotions counts: {by_emo}\n")
+
+    print(f"Saved {len(df)} rows to {args.out}")
+
 
 
 if __name__ == "__main__":

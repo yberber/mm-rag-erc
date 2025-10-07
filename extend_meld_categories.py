@@ -203,6 +203,9 @@ def main() -> None:
         args.gender_col,
     )
 
+    df["idx"] = "m_" + df["dialog_idx"].astype(str) + "_" + df["turn_idx"].astype(str)
+
+
     # Save
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(args.csv_out, index=False)

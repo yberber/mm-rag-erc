@@ -173,11 +173,10 @@ def main() -> None:
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
-    # IEMOCAP marker_gender already contains 'M'/'F'; no normalization needed
     df = df.copy()
 
     train_df = df[df[args.split_col] == args.train_value]
-    train_df = train_df[["dialog_id", "turn_id", "speaker", "marker_gender", "intensity_mean_db", "pitch_mean_hz", "articulation_rate_syll_per_s"]]
+    train_df = train_df[["dialog_id", "turn_id", "speaker", "gender", "intensity_mean_db", "pitch_mean_hz", "articulation_rate_syll_per_s"]]
     if train_df.empty:
         raise ValueError(f"No rows found where {args.split_col} == {args.train_value}")
 
@@ -207,6 +206,10 @@ def main() -> None:
         "articulation_rate_syll_per_s",
         args.gender_col,
     )
+
+    df["idx"] = "i_" + df["dialog_idx"].astype(str) + "_" + df["turn_idx"].astype(str)
+
+
 
     # Save
     args.csv_out.parent.mkdir(parents=True, exist_ok=True)

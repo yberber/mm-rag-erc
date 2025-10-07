@@ -67,6 +67,13 @@ def read_split(root: Path, split: str) -> pd.DataFrame:
     return df
 
 
+def clean_special_characters(df: pd.DataFrame):
+    special_char_conversion_pairs = [('', "'"), ('', ""), ('', ""),
+                                     ('', ""), ('', " "), ('', " ")]
+    for pair in special_char_conversion_pairs:
+        df['utterance'] = df['utterance'].str.replace(*pair)
+
+
 def build_meld_dataframe(root: Path) -> pd.DataFrame:
     dfs: List[pd.DataFrame] = [read_split(root, s) for s in ("train", "dev", "test")]
     raw = pd.concat(dfs, ignore_index=True)
@@ -97,6 +104,7 @@ def build_meld_dataframe(root: Path) -> pd.DataFrame:
     gender_column = raw["Speaker"].apply(get_gender).astype(str)
 
 
+
     out = pd.DataFrame(
         {
             "split": raw["split"],
@@ -110,10 +118,10 @@ def build_meld_dataframe(root: Path) -> pd.DataFrame:
             "emotion": raw["Emotion"].astype(str),
             "gender": gender_column,
             "utterance": raw["Utterance"].astype(str)
-
-
         }
     )
+
+    clean_special_characters(out)
 
     # Keep original row order within each split and ensure split order: train -> dev -> test
     split_order = {"train": 0, "dev": 1, "test": 2}
