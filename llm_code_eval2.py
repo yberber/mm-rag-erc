@@ -10,8 +10,8 @@ import os
 import datetime
 import argparse
 from tqdm import tqdm
+import torch
 
-from langchain_ollama.llms import OllamaLLM
 from utils import (
     load_json_multiline,
     timing,
@@ -51,6 +51,13 @@ def parse_arguments():
         type=int,
         default=None,
         help="Maximum number of samples to test (default: None, tests all)"
+    )
+    parser.add_argument(
+        "--load_model_via",
+        type=str,
+        default="ollama",
+        choices=["ollama", "hf"],
+        help="Method to load the model (default: ollama)"
     )
     return parser.parse_args()
 
@@ -125,7 +132,7 @@ def run_tests(chain, test_data, dataset_name, emotion_set=None, limit=None, verb
 
         if verbose:
             extracted_prediction = extract_emotion_from_llm_output(prediction, emotion_set)
-            print(f"{identifier}, prediction: {extracted_prediction}, target: {target}")
+            print(f"{identifier}, prediction: {prediction}, target: {target}")
             print(f"Score: {correct_count} / {prediction_count}")
 
     end_time = datetime.datetime.now()
@@ -152,13 +159,43 @@ def load_test_data(dataset, max_k, top_n):
     return test_data, test_data_path, processed_data_path
 
 
-def create_model_chain():
-    """Initialize and return the model chain."""
-    model = OllamaLLM(model="llama3.1:8b")
+def create_model_chain(load_model_via: str):
+    if load_model_via.lower() == "ollama":
+        model = load_model_via_ollama()
+    elif load_model_via.lower() == "hf":
+        model = load_model_via_hf()
+    else:
+        raise ValueError(f'The parameter load_model_via should either be ollama or hf, but {load_model_via} was given')
+    
     prompt = EMOTION_RECOGNITION_PROMPT
     chain = prompt | model
     return chain, model, prompt
 
+
+def load_model_via_hf():
+    from langchain_huggingface.llms import HuggingFacePipeline
+    if not torch.cuda.is_available():
+        raise Exception("Cuda should be available to use the model loaded via huggingface for getting responses in a reasonable timeQ")
+    print("Cuda Device Count:", torch.cuda.device_count())
+    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    model = HuggingFacePipeline.from_model_id(
+        model_id=model_id,
+        task="text-generation",
+        pipeline_kwargs={"max_new_tokens": 10, "return_full_text": False},
+        device_map="auto",
+        model_kwargs={"torch_dtype": torch.bfloat16}, # More standard way to set dtype
+    )
+    return model
+
+
+def load_model_via_ollama():
+    from langchain_ollama.llms import OllamaLLM
+    """Initialize and return the model chain."""
+    model = OllamaLLM(
+        model="llama3.1:8b",
+        num_predict=10)
+    return model
+    
 
 def build_test_info(test_data_path, model, prompt, emotion_set, stats):
     """Build the test information dictionary."""
@@ -167,7 +204,7 @@ def build_test_info(test_data_path, model, prompt, emotion_set, stats):
         "elapsed_time_in_sec": round(run_tests.elapsed_time),
         "prompt_type": prompt.__class__.__name__,
         "prompt_template": prompt.template,
-        "used_model": f"{type(model).__name__}(model={model.model!r})",
+        # "used_model": f"{type(model).__name__}(model={model.model!r})",
         "emotion_set": emotion_set,
         "stats": stats
     }
@@ -193,6 +230,7 @@ def save_test_results(dataset, processed_data_path, test_info, predictions, actu
 def main():
     """Main execution function."""
     args = parse_arguments()
+    args.load_model_via = "hf"
 
     # Load data
     test_data, test_data_path, processed_data_path = load_test_data(
@@ -200,7 +238,7 @@ def main():
     )
 
     # Initialize model
-    chain, model, prompt = create_model_chain()
+    chain, model, prompt = create_model_chain(args.load_model_via)
 
     # Run tests
     emotion_set = get_mapped_emotion_set(args.dataset)
@@ -216,6 +254,7 @@ def main():
     # Build and save results
     test_info = build_test_info(test_data_path, model, prompt, emotion_set, stats)
     save_test_results(args.dataset, processed_data_path, test_info, predictions, actuals, identifiers)
+
 
 
 if __name__ == "__main__":
