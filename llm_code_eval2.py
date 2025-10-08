@@ -182,7 +182,7 @@ def load_model_via_hf():
         task="text-generation",
         pipeline_kwargs={"max_new_tokens": 10, "return_full_text": False},
         device_map="auto",
-        model_kwargs={"torch_dtype": torch.bfloat16}, # More standard way to set dtype
+        model_kwargs={"dtype": torch.bfloat16}, # More standard way to set dtype
     )
     model.name = f'{model_id.split("/")[1]} via HF'
     return model
