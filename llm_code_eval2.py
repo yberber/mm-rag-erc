@@ -5,7 +5,6 @@ This script runs emotion recognition tests on processed datasets (MELD or IEMOCA
 using LangChain and Ollama LLM models.
 """
 
-import json
 import os
 import datetime
 import argparse
@@ -185,15 +184,18 @@ def load_model_via_hf():
         device_map="auto",
         model_kwargs={"torch_dtype": torch.bfloat16}, # More standard way to set dtype
     )
+    model.name = f'{model_id.split("/")[1]} via HF'
     return model
 
 
 def load_model_via_ollama():
     from langchain_ollama.llms import OllamaLLM
     """Initialize and return the model chain."""
+    model_id = "llama3.1:8b"
     model = OllamaLLM(
-        model="llama3.1:8b",
+        model=model_id,
         num_predict=10)
+    model.name = f'{model_id} via Ollama'
     return model
     
 
@@ -204,7 +206,7 @@ def build_test_info(test_data_path, model, prompt, emotion_set, stats):
         "elapsed_time_in_sec": round(run_tests.elapsed_time),
         "prompt_type": prompt.__class__.__name__,
         "prompt_template": prompt.template,
-        # "used_model": f"{type(model).__name__}(model={model.model!r})",
+        "used_model": model.name,
         "emotion_set": emotion_set,
         "stats": stats
     }
@@ -230,7 +232,6 @@ def save_test_results(dataset, processed_data_path, test_info, predictions, actu
 def main():
     """Main execution function."""
     args = parse_arguments()
-    args.load_model_via = "hf"
 
     # Load data
     test_data, test_data_path, processed_data_path = load_test_data(
