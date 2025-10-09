@@ -4,7 +4,7 @@ Emotion Recognition Testing Script
 This script runs emotion recognition tests on processed datasets (MELD or IEMOCAP)
 using LangChain and Ollama LLM models.
 """
-
+import gc
 import os
 import datetime
 import argparse
@@ -18,7 +18,10 @@ from utils import (
     extract_emotion_from_llm_output,
     dump_json_test_result
 )
-from prompts import EMOTION_RECOGNITION_PROMPT, EMOTION_RECOGNITION_CHAT_PROMPT
+from prompts import (EMOTION_RECOGNITION_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT, CLAUDE_EMOTION_RECOGNITION_PROMPT
+, GPT5_EMOTION_RECOGNITION_PROMPT, GPT5_JSON_EMOTION_RECOGNITION_PROMPT, GEMINI_2_EMOTION_RECOGNITION_PROMPT,
+                     CLAUDE_2_EMOTION_RECOGNITION_PROMPT, GEMINI_3_EMOTION_RECOGNITION_PROMPT,
+                     GPT_5_2_EMOTION_RECOGNITION_PROMPT)
 
 
 def parse_arguments():
@@ -57,6 +60,10 @@ def parse_arguments():
         default="ollama",
         choices=["ollama", "hf"],
         help="Method to load the model (default: ollama)"
+    )
+    parser.add_argument(
+        "--not_save",
+        help="Flag not to save the test results"
     )
     return parser.parse_args()
 
@@ -167,6 +174,22 @@ def create_model_chain(load_model_via: str):
         raise ValueError(f'The parameter load_model_via should either be ollama or hf, but {load_model_via} was given')
     
     prompt = EMOTION_RECOGNITION_PROMPT
+    prompt = GEMINI_EMOTION_RECOGNITION_PROMPT
+    prompt = CLAUDE_EMOTION_RECOGNITION_PROMPT
+    prompt = GPT5_EMOTION_RECOGNITION_PROMPT
+    prompt = GPT5_JSON_EMOTION_RECOGNITION_PROMPT
+    prompt = GEMINI_2_EMOTION_RECOGNITION_PROMPT
+    prompt = CLAUDE_2_EMOTION_RECOGNITION_PROMPT
+    prompt = GEMINI_3_EMOTION_RECOGNITION_PROMPT
+    prompt = GPT_5_2_EMOTION_RECOGNITION_PROMPT
+    prompt = EMOTION_RECOGNITION_PROMPT
+    prompt = GEMINI_EMOTION_RECOGNITION_PROMPT
+    prompt = CLAUDE_EMOTION_RECOGNITION_PROMPT
+
+
+
+
+    print(f"CURRENT PROMPT IS {prompt}")
     chain = prompt | model
     return chain, model, prompt
 
@@ -181,7 +204,9 @@ def load_model_via_hf():
         model_id=model_id,
         task="text-generation",
         pipeline_kwargs={"max_new_tokens": 10, "return_full_text": False},
-        device_map="auto",
+        # device_map="auto",
+        # This line forces the model onto the GPU
+        device=0,
         model_kwargs={"dtype": torch.bfloat16}, # More standard way to set dtype
     )
     model.name = f'{model_id.split("/")[1]} via HF'
@@ -231,30 +256,45 @@ def save_test_results(dataset, processed_data_path, test_info, predictions, actu
 
 def main():
     """Main execution function."""
-    args = parse_arguments()
+    chain = None
+    model = None
 
-    # Load data
-    test_data, test_data_path, processed_data_path = load_test_data(
-        args.dataset, args.max_k, args.top_n
-    )
+    try:
+        args = parse_arguments()
 
-    # Initialize model
-    chain, model, prompt = create_model_chain(args.load_model_via)
+        # Load data
+        test_data, test_data_path, processed_data_path = load_test_data(
+            args.dataset, args.max_k, args.top_n
+        )
 
-    # Run tests
-    emotion_set = get_mapped_emotion_set(args.dataset)
-    predictions, actuals, identifiers, stats = run_tests(
-        chain,
-        test_data,
-        dataset_name=args.dataset,
-        emotion_set=emotion_set,
-        limit=args.limit,
-        verbose=True
-    )
+        # Initialize model
+        chain, model, prompt = create_model_chain(args.load_model_via)
 
-    # Build and save results
-    test_info = build_test_info(test_data_path, model, prompt, emotion_set, stats)
-    save_test_results(args.dataset, processed_data_path, test_info, predictions, actuals, identifiers)
+        # Run tests
+        emotion_set = get_mapped_emotion_set(args.dataset)
+        predictions, actuals, identifiers, stats = run_tests(
+            chain,
+            test_data,
+            dataset_name=args.dataset,
+            emotion_set=emotion_set,
+            limit=args.limit,
+            verbose=True
+        )
+
+        # Build and save results
+        test_info = build_test_info(test_data_path, model, prompt, emotion_set, stats)
+
+        if args.not_save:
+            save_test_results(args.dataset, processed_data_path, test_info, predictions, actuals, identifiers)
+
+    finally:
+        if model is not None:
+            del model
+        if chain is not None:
+            del chain
+        gc.collect()
+        torch.cuda.empty_cache()
+        print("Cleanup complete. GPU memory should be released.")
 
 
 
