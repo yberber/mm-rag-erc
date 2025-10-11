@@ -7,28 +7,18 @@ from tqdm import tqdm
 import os
 import json
 from utils import (set_pandas_display_options, meld_emotion_set_mapped, iemocap_emotion_set_mapped,
-                   meld_emotion_mapper, iemocap_emotion_mapper, emotion_mapper_union)
+                   meld_emotion_mapper, iemocap_emotion_mapper, emotion_mapper_union, load_json)
 import pickle
-from langchain_ollama.llms import OllamaLLM
 
 
 set_pandas_display_options()
 
 
 
-# meld_emotion_set = ["joyful", "sad", "neutral", "angry", "surprised", "fearful", "disgusted"]
-# iemocap_emotion_set = ["joyful", "sad", "neutral", "angry", "excited", "frustrated"]
-#
-# meld_emotion_mapper = {"joy": "joyful", "sadness": "sad", "neutral": "neutral",
-#                        "anger": "angry", "surprise": "surprised", "fear": "fearful", "disgust": "disgusted"}
-# iemocap_emotion_mapper = {"happiness": "joyful", "sadness": "sad", "neutral": "neutral", "anger": "angry",
-#                           "excitement": "excited", "frustration": "frustrated"}
-# emotion_mapper_union = meld_emotion_mapper.copy()
-# emotion_mapper_union.update(iemocap_emotion_mapper)
+idx_to_utterance_emotion_dict = load_json("vectorstore/idx_to_utterance_emotion.pkl")
+# with open("vectorstore/idx_to_utterance_emotion.pkl", 'rb') as f:
+#     idx_to_utterance_emotion_dict = pickle.load(f)
 
-
-with open("vectorstore/idx_to_utterance_emotion.pkl", 'rb') as f:
-    idx_to_utterance_emotion_dict = pickle.load(f)
 
 with open("vectorstore/simple/similar_utterance_idx_top10.pkl", 'rb') as f:
     similar_utterance_idx_top10 = pickle.load(f)
@@ -45,7 +35,7 @@ def create_history_context(conversation, current_utterance_idx, max_k):
         context += f"{unit['speaker']}: {unit['utterance']}\n"
     return context.strip("\n")
 
-def get_vectordb_instance(path_to_db="vectorstore_data/simple/meld_iemocap_simple_db"):
+def get_vectordb_instance(path_to_db="vectorstore_data/single/meld_iemocap_simple_db"):
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector_db = Chroma(
         collection_name="meld_iemocap_simple",

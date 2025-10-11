@@ -9,12 +9,22 @@ def set_pandas_display_options():
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
+    pd.set_option('display.width', 500)
     # pd.set_option('display.max_colwidth', -1)
     pd.set_option('display.precision', 2)
 
 
-meld_emotion_set_original = ["joyful", "sad", "neutral", "angry", "surprised", "fearful", "disgusted"]
-iemocap_emotion_set_original = ["joyful", "sad", "neutral", "angry", "excited", "frustrated"]
+meld_emotion_set_original = ["joy", "sadness", "neutral", "anger", "surprise", "fear", "disgust"]
+iemocap_emotion_set_original = ["happiness", "sadness", "neutral", "anger", "excitement", "frustration",
+                                "unknown", "surprise", "fear", "other", "disgust"]
+
+# union_emotion_set_original = sorted(list(set(meld_emotion_set_original).union(set(iemocap_emotion_set_original))))
+union_emotion_set_original = ['anger', 'disgust','excitement', 'fear', 'frustration',
+                     'happiness', 'joy', 'neutral', 'other', 'sadness', 'surprise', 'unknown']
+
+id_to_original_emotion = {i: e for i, e in enumerate(union_emotion_set_original)}
+original_emotion_to_id = {e: i for i, e in enumerate(union_emotion_set_original)}
+
 
 meld_emotion_mapper = {"joy": "joyful", "sadness": "sad", "neutral": "neutral",
                        "anger": "angry", "surprise": "surprised", "fear": "fearful", "disgust": "disgusted"}
@@ -106,6 +116,16 @@ def load_json_test_result(path):
         loaded = json.load(f)
     return loaded
 
+def save_as_json(path, data):
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4)
+    print(f"Saved data to {path}")
+
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
+        loaded = json.load(f)
+    return loaded
+
 
 def timing(func):
     @wraps(func)
@@ -118,4 +138,74 @@ def timing(func):
         wrapper.elapsed_time = elapsed
         return result
     return wrapper
+
+
+def anonymize_speakers_in_dialog(df_dialog, use_letters=False):
+    unique_speakers = df_dialog['speaker'].unique()
+    mapping = {name: f"Speaker_{chr(i+65) if use_letters else i}" for i, name in enumerate(unique_speakers)}
+    df_dialog['speaker'] = df_dialog['speaker'].map(mapping)
+    # Anonymize names within the 'utterance' column
+    # We loop through the original names and their anonymized versions
+    for name, anonymized_name in mapping.items():
+        # Create a case-insensitive regular expression to find the whole word
+        pattern = fr"\b{re.escape(name)}\b"
+
+        # Apply the replacement to the utterance column
+        df_dialog['utterance'] = df_dialog['utterance'].str.replace(
+            pattern,
+            anonymized_name,
+            regex=True,
+            case=False  # This makes the replacement case-insensitive
+        )
+    return df_dialog
+
+# eval_folder = "EVAL_RESULTS/"
+#
+# default_test_results_path = eval_folder + "MELD-k12_n1_Oct-08-2025_18:49:59.json"
+# gemini_test_results_path = eval_folder + "MELD-k12_n1_Oct-08-2025_19:07:22.json"
+# claude_test_results_path = eval_folder + "MELD-k12_n1_Oct-08-2025_19:19:36.json"
+# gpt5_test_results_path = eval_folder + "MELD-k12_n1_Oct-08-2025_19:33:05.json"
+#
+# default_test_info, default_test_results = load_json_test_result(default_test_results_path).values()
+# predictions, targets = [], []
+# for unit in default_test_results:
+#     pred = unit["pred"]
+#     extracted_pred = extract_emotion_from_llm_output(pred)
+#     if extracted_pred in ["MultipleValidEmotionsFound", "NoValidEmotionFound"]:
+#         extracted_pred = "neutral"
+#     actual = unit["actual"]
+#
+#     predictions.append(extracted_pred)
+#     targets.append(actual)
+#
+# set(predictions)
+# set(targets)
+# set(targets).issubset(set(predictions))
+#
+# from collections import Counter
+# Counter(predictions)
+#
+# from sklearn.metrics import classification_report
+# print(classification_report(targets, predictions))
+#
+# def get_report_from_test_path(test_path):
+#     test_info, test_results = load_json_test_result(test_path).values()
+#     predictions, targets = [], []
+#     set(targets)
+#     for unit in test_results:
+#         pred = unit["pred"]
+#         extracted_pred = extract_emotion_from_llm_output(pred, valid_emotions=meld_emotion_set_mapped)
+#         if extracted_pred in ["MultipleValidEmotionsFound", "NoValidEmotionFound"]:
+#             extracted_pred = "neutral"
+#
+#         actual = unit["actual"]
+#
+#         predictions.append(extracted_pred)
+#         targets.append(actual)
+#     return classification_report(targets, predictions, zero_division=0)
+#
+# print(get_report_from_test_path(default_test_results_path))
+# print(get_report_from_test_path(gemini_test_results_path))
+# print(get_report_from_test_path(claude_test_results_path))
+# print(get_report_from_test_path(gpt5_test_results_path))
 
