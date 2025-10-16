@@ -1,0 +1,285 @@
+import pandas as pd
+from glob import glob
+from pathlib import Path
+from sklearn.metrics import accuracy_score, f1_score
+from typing import Dict, Any, List
+from collections import Counter
+
+from utils import (get_meld_iemocap_datasets_as_dataframe,
+                   load_json, set_pandas_display_options, save_as_json)
+
+# --- Configuration ---
+SCRIPT_DIR = Path(__file__).parent.resolve()
+CACHE_DIR = SCRIPT_DIR.parent / "vectorstore" / "caches"
+RESULTS_DIR = SCRIPT_DIR.parent / "EVALUATION_RESULTS/retriaval_evaluations" # MODIFICATION: Define results directory
+TOP_N = 3
+
+set_pandas_display_options()
+
+
+def load_and_prepare_data() -> (pd.DataFrame, pd.DataFrame, Dict[str, str]):
+    """
+    Loads datasets, prepares test and train splits, and creates an emotion map.
+    The train split is indexed for fast conversational window lookups.
+    """
+    print("Loading and preparing datasets...")
+    df_meld, df_iemocap = get_meld_iemocap_datasets_as_dataframe()
+    df_meld["dataset"] = "MELD"
+    df_iemocap["dataset"] = 'IEMOCAP'
+
+    # --- Prepare Test Data ---
+    df_meld_test = df_meld.loc[df_meld["split"] == "test", ['idx', 'mapped_emotion', 'dataset']]
+    df_iemocap_test = df_iemocap.loc[
+        (df_iemocap["split"] == "test") & (df_iemocap['erc_target']), ['idx', 'mapped_emotion', 'dataset']]
+    df_test = pd.concat([df_meld_test, df_iemocap_test], axis=0, ignore_index=True)
+    print(f"Prepared test set with {len(df_test)} utterances.")
+
+    # --- Prepare Train Data (for reconstructing emotion flows) ---
+    df_meld_train = df_meld.loc[df_meld['split'] == 'train', ['dialog_idx', 'idx', 'mapped_emotion', 'dataset']]
+    df_iemocap_train = df_iemocap.loc[
+        (df_iemocap['split'] == 'train') & (df_iemocap['mapped_emotion'] != 'unknown'), ['dialog_idx', 'idx',
+                                                                                         'mapped_emotion', 'dataset']]
+    df_train = pd.concat([df_meld_train, df_iemocap_train], ignore_index=True)
+    df_train["turn_idx"] = df_train.groupby(['dataset', 'dialog_idx']).cumcount()
+    df_train = df_train.set_index('idx', drop=False)  # Set idx as index for fast .loc lookups
+    print(f"Prepared train set with {len(df_train)} utterances for context lookups.")
+
+    # --- Create Emotion Map ---
+    idx_to_emotion_map = pd.Series(
+        pd.concat([df_meld['mapped_emotion'], df_iemocap['mapped_emotion']]).values,
+        index=pd.concat([df_meld['idx'], df_iemocap['idx']]).values
+    ).to_dict()
+    print(f"Created emotion map with {len(idx_to_emotion_map)} entries.")
+
+    return df_test, df_train, idx_to_emotion_map
+
+
+def get_predominant_emotions(retrieved_idx: str, db_type: str, window_size: int, df_train: pd.DataFrame,
+                             idx_to_emotion_map: dict) -> List[str]:
+    """
+    Finds the most frequent emotion(s) in the context window of a retrieved utterance.
+    """
+    if db_type == 'single':
+        emotion = idx_to_emotion_map.get(retrieved_idx)
+        return [emotion] if emotion else []
+
+    try:
+        # Use .loc for fast lookup of the final utterance's info
+        final_utterance = df_train.loc[retrieved_idx]
+        dialog_idx = final_utterance['dialog_idx']
+        dataset = final_utterance['dataset']
+        turn_idx_end = final_utterance['turn_idx']
+
+        # Filter the train set to just this dialogue
+        dialog_df = df_train[(df_train['dialog_idx'] == dialog_idx) & (df_train['dataset'] == dataset)]
+
+        # Slice to get the window
+        turn_idx_start = max(0, turn_idx_end - window_size + 1)
+        window_df = dialog_df[(dialog_df['turn_idx'] >= turn_idx_start) & (dialog_df['turn_idx'] <= turn_idx_end)]
+
+        # .mode() efficiently finds the most frequent value(s) and handles ties
+        return window_df['mapped_emotion'].mode().tolist()
+    except (KeyError, IndexError):
+        # Handle cases where the idx might not be in the training data map
+        return []
+
+
+def calculate_metrics_predominant(y_true: pd.Series, y_pred_lists: pd.Series) -> Dict[str, float]:
+    """Calculates metrics where the prediction is a list of predominant emotions."""
+    y_true_list = y_true.tolist()
+    y_pred_lists_list = y_pred_lists.tolist()
+
+    # --- Accuracy: Correct if the true label is IN the predicted list ---
+    correct_predictions = sum(
+        1 for true_label, pred_list in zip(y_true_list, y_pred_lists_list) if pred_list and true_label in pred_list)
+    accuracy = correct_predictions / len(y_true_list) if y_true_list else 0.0
+
+    # --- F1 Score: Choose a single prediction to compare against ---
+    # If match, use true_label (rewards model). If no match, default to first in list.
+    single_preds = [
+        (true_label if pred_list and true_label in pred_list else (pred_list[0] if pred_list else None))
+        for true_label, pred_list in zip(y_true_list, y_pred_lists_list)
+    ]
+
+    weighted_f1 = f1_score(y_true_list, single_preds, average='weighted', zero_division=0)
+
+    return {
+        "accuracy": round(accuracy, 4),
+        "weighted_f1": round(weighted_f1, 4)
+    }
+
+
+def run_analysis_pipeline_predominant(cache_paths: List[Path], df_test: pd.DataFrame, df_train: pd.DataFrame,
+                                      idx_to_emotion_map: Dict[str, str]) -> pd.DataFrame:
+    """Runs the analysis based on predominant emotions."""
+    all_results = {}
+    print(f"\nRunning analysis based on PREDOMINANT emotions (test set size: {len(df_test)})...")
+
+    for path in cache_paths:
+        cache_name = path.stem
+        print(f"  -> Analyzing cache: {cache_name}")
+
+        # Parse vectorstore type and window size from the name
+        parts = cache_name.split('_')
+        db_type = parts[2]
+        window_size = int(parts[3]) if len(parts) > 3 else 1
+
+        cache_data = load_json(path=str(path))
+        df_analysis = df_test.copy()
+        df_analysis['sim_idx_list'] = df_analysis['idx'].map(cache_data)
+
+        results = {}
+        for i in range(1, TOP_N + 1):
+            # For each test utterance, get the predominant emotions of the i-th retrieved item
+            df_analysis[f'pred_emotions_@{i}'] = df_analysis['sim_idx_list'].apply(
+                lambda idx_list: get_predominant_emotions(idx_list[i - 1], db_type, window_size, df_train,
+                                                          idx_to_emotion_map) if (
+                            isinstance(idx_list, list) and len(idx_list) >= i) else []
+            )
+
+            # Calculate metrics for each dataset
+            for dataset_name, df_subset in [('MELD', df_analysis[df_analysis['dataset'] == 'MELD']),
+                                            ('IEMOCAP', df_analysis[df_analysis['dataset'] == 'IEMOCAP']),
+                                            ('Total', df_analysis)]:
+                metrics = calculate_metrics_predominant(df_subset['mapped_emotion'], df_subset[f'pred_emotions_@{i}'])
+                results[f'{dataset_name}_Acc_@{i}'] = metrics['accuracy']
+                results[f'{dataset_name}_F1_@{i}'] = metrics['weighted_f1']
+
+        all_results[cache_name] = results
+
+    df_summary = pd.DataFrame.from_dict(all_results, orient='index')
+    df_summary.columns = pd.MultiIndex.from_tuples(
+        [col.split('_') for col in df_summary.columns], names=['dataset', 'metric', 'position']
+    )
+    return df_summary, all_results
+
+
+
+def calculate_metrics(y_true: pd.Series, y_pred: pd.Series) -> Dict[str, float]:
+    """Calculates accuracy and weighted F1-score and returns them in a dict."""
+    if y_true.empty or y_pred.dropna().empty:
+        return {"accuracy": 0.0, "weighted_f1": 0.0}
+
+    accuracy = accuracy_score(y_true, y_pred)
+    weighted_f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
+    return {
+        "accuracy": round(accuracy, 4),
+        "weighted_f1": round(weighted_f1, 4)
+    }
+
+
+
+def analyze_cache(cache_path: Path, df_test: pd.DataFrame, idx_to_emotion_map: Dict[str, str]) -> Dict[str, Any]:
+    """Analyzes a single cache file and returns a dictionary of performance metrics."""
+    cache_name = cache_path.stem
+    cache_data = load_json(path=str(cache_path))
+    df_analysis = df_test.copy()
+
+    df_analysis['sim_idx_list'] = df_analysis['idx'].map(cache_data)
+    df_analysis['sim_emotions'] = df_analysis['sim_idx_list'].apply(
+        lambda idx_list: [idx_to_emotion_map.get(idx) for idx in idx_list[:TOP_N]] if isinstance(idx_list,
+                                                                                                 list) else [None] * TOP_N
+    )
+
+    pred_cols = [f'pred_emotion_@{i + 1}' for i in range(TOP_N)]
+    df_analysis[pred_cols] = pd.DataFrame(df_analysis['sim_emotions'].tolist(), index=df_analysis.index)
+
+    results = {}
+    df_meld_results = df_analysis[df_analysis['dataset'] == 'MELD']
+    df_iemocap_results = df_analysis[df_analysis['dataset'] == 'IEMOCAP']
+
+    for i in range(1, TOP_N + 1):
+        pred_col = f'pred_emotion_@{i}'
+        for dataset_name, df_subset in [('MELD', df_meld_results), ('IEMOCAP', df_iemocap_results),
+                                        ('Total', df_analysis)]:
+            metrics = calculate_metrics(df_subset['mapped_emotion'], df_subset[pred_col])
+            results[f'{dataset_name}_Acc_@{i}'] = metrics['accuracy']
+            results[f'{dataset_name}_F1_@{i}'] = metrics['weighted_f1']
+
+    return {cache_name: results}
+
+
+def run_analysis_pipeline(cache_paths: List[Path], df_test: pd.DataFrame,
+                          idx_to_emotion_map: Dict[str, str]) -> pd.DataFrame:
+    """Runs the full analysis for a given test set and returns a summary DataFrame."""
+    all_results = {}
+    print(f"\nRunning analysis on a test set of size {len(df_test)}...")
+    for path in cache_paths:
+        # A simple print to show progress
+        print(f"  -> Analyzing cache: {Path(path).stem}")
+        result = analyze_cache(path, df_test, idx_to_emotion_map)
+        all_results.update(result)
+
+    df_summary = pd.DataFrame.from_dict(all_results, orient='index')
+    df_summary.columns = pd.MultiIndex.from_tuples(
+        [col.split('_') for col in df_summary.columns],
+        names=['dataset', 'metric', 'position']
+    )
+    return df_summary, all_results
+
+
+
+def display_results(df_summary: pd.DataFrame, title: str):
+    """Formats and prints the top-1 results table."""
+    print("\n\n" + "=" * 80)
+    print(f"📊 {title}")
+    print("=" * 80)
+
+    # Select only top-1 results and sort by the most important metric
+    top_1_results = df_summary.xs('@1', level='position', axis=1).sort_values(('Total', 'F1'), ascending=False)
+
+    # Apply styling to highlight the best score in each column
+    styled_df = top_1_results.style.highlight_max(axis=0, color='lightgreen').format("{:.2f}")
+
+    print(styled_df.to_string())
+
+
+def main():
+    """Main function to run all three analysis pipelines."""
+    df_test, df_train, idx_to_emotion_map = load_and_prepare_data()
+
+    cache_paths = sorted(list(CACHE_DIR.glob("*.json")))
+    if not cache_paths:
+        print(f"❌ Error: No cache files found in {CACHE_DIR}")
+        return
+
+    # # --- 1. Run analysis on the COMPLETE test set (Final Utterance Emotion) ---
+    # df_summary_all = run_analysis_pipeline(cache_paths, df_test, idx_to_emotion_map)
+    # display_results(df_summary_all, "Top-1 Performance (Final Utterance Emotion)")
+    #
+    # # --- 2. Run analysis EXCLUDING 'neutral' (Final Utterance Emotion) ---
+    # df_test_no_neutral = df_test[df_test['mapped_emotion'] != 'neutral'].copy()
+    # df_summary_no_neutral = run_analysis_pipeline(cache_paths, df_test_no_neutral, idx_to_emotion_map)
+    # display_results(df_summary_no_neutral, "Top-1 Performance (Final Utterance, Excl. 'neutral')")
+    #
+    # # --- 3. Run analysis based on PREDOMINANT emotion in retrieved flow ---
+    # df_summary_predominant = run_analysis_pipeline_predominant(cache_paths, df_test, df_train, idx_to_emotion_map)
+    # display_results(df_summary_predominant, "Top-1 Performance (Based on Predominant Emotion)")
+
+    # --- 1. Run analysis on the COMPLETE test set ---
+    df_summary_all, results_dict_all = run_analysis_pipeline(cache_paths, df_test, idx_to_emotion_map)  # MODIFICATION
+    save_as_json(RESULTS_DIR / "retrieval_analysis_all_emotions.json", results_dict_all)  # MODIFICATION
+    print(f"✅ Saved full analysis results to {RESULTS_DIR / 'retrieval_analysis_all_emotions.json'}")
+    display_results(df_summary_all, "Top-1 Performance (Final Utterance Emotion)")
+
+    # --- 2. Run analysis EXCLUDING 'neutral' ---
+    df_test_no_neutral = df_test[df_test['mapped_emotion'] != 'neutral'].copy()
+    df_summary_no_neutral, results_dict_no_neutral = run_analysis_pipeline(cache_paths, df_test_no_neutral,
+                                                                           idx_to_emotion_map)  # MODIFICATION
+    save_as_json(RESULTS_DIR / "retrieval_analysis_no_neutral.json", results_dict_no_neutral)  # MODIFICATION
+    print(f"✅ Saved no-neutral analysis results to {RESULTS_DIR / 'retrieval_analysis_no_neutral.json'}")
+    display_results(df_summary_no_neutral, "Top-1 Performance (Final Utterance, Excl. 'neutral')")
+
+    # --- 3. Run analysis based on PREDOMINANT emotion ---
+    df_summary_predominant, results_dict_predominant = run_analysis_pipeline_predominant(cache_paths, df_test, df_train,
+                                                                                         idx_to_emotion_map)  # MODIFICATION
+    save_as_json(RESULTS_DIR / "retrieval_analysis_predominant_emotion.json", results_dict_predominant)  # MODIFICATION
+    print(
+        f"✅ Saved predominant emotion analysis results to {RESULTS_DIR / 'retrieval_analysis_predominant_emotion.json'}")
+    display_results(df_summary_predominant, "Top-1 Performance (Based on Predominant Emotion)")
+
+
+if __name__ == "__main__":
+    # You will need to copy your existing functions (calculate_metrics, analyze_cache,
+    # run_analysis_pipeline, display_results) into this script for it to be complete.
+    main()

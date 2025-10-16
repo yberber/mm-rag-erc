@@ -9,8 +9,8 @@ def main():
     if "vectorstore" not in os.getcwd():
         os.chdir("vectorstore")
 
-    df_meld = pd.read_csv("../meld_erc_with_categories.csv")
-    df_iemocap = pd.read_csv("../iemocap_erc_with_categories.csv")
+    df_meld = pd.read_csv("../BENCMARK_DATASETS/meld_erc_with_categories.csv")
+    df_iemocap = pd.read_csv("../BENCMARK_DATASETS/iemocap_erc_with_categories.csv")
 
     idx_to_utterance_emotion = {}
 

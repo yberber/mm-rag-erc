@@ -3,61 +3,94 @@ import pandas as pd
 from tqdm import tqdm
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from utils import set_pandas_display_options, save_as_json
+from utils import set_pandas_display_options, save_as_json, collection_exists_and_not_empty
 import argparse
-
+from utils import meld_mapped_valid_emotion_set, iemocap_mapped_valid_emotion_set
 
 set_pandas_display_options()
 
 
 def get_vectordb_instance(path_to_db):
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    collection_name = path_to_db.split("/")[-1] # TODO
+    collection_exists_and_not_empty(path_to_db, collection_name, throw_exception=True)
     vector_db = Chroma(
-        collection_name="meld_iemocap_simple",
+        collection_name=collection_name,
         embedding_function=embeddings,
         persist_directory=path_to_db,
     )
+    print(f"The vectordb {collection_name} at {path_to_db} has {vector_db._collection.count()} documents")
     return vector_db
 
 
-def get_sim_utterance_idx(db, utterance, max_k, idx=None):
-    out = db.similarity_search(utterance, k=max_k+1)
-    out_idx = [o.metadata["idx"] for o in out]
+def get_query(group_df, turn_idx, window_size=None, type="single"):
+    # print(f"len group_df is :{len(group_df)} and turn_idx is: {turn_idx}")
+    if type == "single":
+        row = group_df.iloc[turn_idx]
+        return row["utterance"]
+    elif type in ["flow", "hybrid"]:
+        group_df = group_df.iloc[max(0, turn_idx - window_size + 1):turn_idx+1]
+        page_content_lines = []
+        for _, row in group_df.iterrows():
+            line = f"{row['speaker']}: {row['utterance']}"
+            page_content_lines.append(line)
+        if type == "hybrid":
+            # Repeat the last utterance to give it more weight
+            last_utterance_text = f"{group_df.iloc[-1]['speaker']}: {group_df.iloc[-1]['utterance']}"
+            page_content_lines.append(f"\nThe target utterance is: {last_utterance_text}")
+
+        return "\n".join(page_content_lines)
+    else:
+        raise Exception(f"Unknown type: {type}")
+
+
+
+
+def get_sim_utterance_idx(db, query, top_n, idx=None, valid_emotions=None):
+    out = db.similarity_search(query, k=50)
+    if valid_emotions:
+        out_idx = [o.metadata["idx"] for o in out if o.metadata["final_emotion"] in valid_emotions]
+    else:
+        out_idx = [o.metadata["idx"] for o in out]
     if idx:
+        idx_prefix = idx[:idx.rfind('_')+1]
+        out_idx = [o for o in out_idx if idx_prefix not in o]
         out_idx = [o for o in out_idx if o != idx]
-    out_idx = out_idx[:max_k]
+    out_idx = out_idx[:top_n]
     return out_idx
-    # example_text = ""
-    # for sim_doc in out:
-    #     example_text += f"< {sim_doc.page_content} : {sim_doc.metadata['emotion']} >\n"
-    # return example_text.strip('\n')
 
 
-def get_sim_utterance_idx_for_meld(db, max_k):
+
+def get_sim_utterance_idx_for_dataset(db, top_n, db_type, dataset, dataset_name, window_size=None, filter_column=None, valid_emotions=None):
     similar_utterance_idx = {}
-    df_meld = pd.read_csv("../meld_erc_with_categories.csv")[:10]
-    for unit in tqdm(df_meld.to_dict(orient="records"), desc="Processing meld data"):
-        key = unit["idx"]
-        value = get_sim_utterance_idx(db, unit["utterance"], max_k, unit["idx"])
-        similar_utterance_idx[key] = value
-    return similar_utterance_idx
-
-def get_sim_utterance_idx_for_iemocap(db, max_k):
-    similar_utterance_idx = {}
-    df_iemocap = pd.read_csv("../iemocap_erc_with_categories.csv")[:10]
-    for unit in tqdm(df_iemocap.to_dict(orient="records"), desc="Processing iemocap data"):
-        if not unit["erc_target"]:
-            continue
-        key = unit["idx"]
-        value = get_sim_utterance_idx(db, unit["utterance"], max_k, unit["idx"])
-        similar_utterance_idx[key] = value
+    for dialog_idx, dialog_df in tqdm(dataset.groupby("dialog_idx"), desc=f"Processing {dataset_name} dataset with {db._collection.name} vectorstore"):
+        for unit in dialog_df.to_dict(orient="records"):
+            if filter_column and not unit[filter_column]:
+                continue
+            unit_idx = unit["idx"]
+            turn_idx = unit["turn_idx"]
+            query = get_query(dialog_df, turn_idx, type=db_type, window_size=window_size)
+            value = get_sim_utterance_idx(db, query, top_n, unit_idx, valid_emotions=valid_emotions)
+            similar_utterance_idx[unit_idx] = value
     return similar_utterance_idx
 
 
+def get_sim_utterance_idx_for_benchmark_datasets(db, top_n, db_type, window_size=None):
+    similar_utterance_idx = {}
 
-def cache_similar_utterances(vectorstore_name):
+    df_meld = pd.read_csv("../BENCMARK_DATASETS/meld_erc_with_categories.csv")[["dialog_idx", "turn_idx", "speaker", "utterance", "idx", "mapped_emotion"]]
+    df_iemocap = pd.read_csv("../BENCMARK_DATASETS/iemocap_erc_with_categories.csv")[["dialog_idx", "turn_idx", "speaker", "utterance", "idx", "erc_target", "mapped_emotion"]]
+    # df_iemocap = df_iemocap[df_iemocap["erc_target"]].drop(columns="erc_target")
+
+    similar_utterance_idx.update(get_sim_utterance_idx_for_dataset(db, top_n, db_type, df_meld, "MELD", window_size=window_size, valid_emotions=meld_mapped_valid_emotion_set))
+    similar_utterance_idx.update(get_sim_utterance_idx_for_dataset(db, top_n, db_type, df_iemocap, "IEMOCAP", window_size=window_size, filter_column="erc_target", valid_emotions=iemocap_mapped_valid_emotion_set))
+
+    return similar_utterance_idx
+
+def cache_similar_utterances(vectorstore_name, top_n):
     if vectorstore_name is None:
         vectorstore_names = next(os.walk('vectorstore_data'))[1]
+        os.makedirs("caches", exist_ok=True)
         cached_vectorstores = [json_file[:-(len(".json"))] for json_file in os.listdir("caches/") if json_file.endswith(".json")]
         vectorstores_to_cache = set(vectorstore_names).difference(set(cached_vectorstores))
     else:
@@ -65,11 +98,12 @@ def cache_similar_utterances(vectorstore_name):
 
     for vectorstore_name in tqdm(vectorstores_to_cache, desc=f"Caching vectorstores: {vectorstores_to_cache}"):
         db = get_vectordb_instance(f"vectorstore_data/{vectorstore_name}")
-
-        similar_utterance_idx = {}
-        similar_utterance_idx.update(get_sim_utterance_idx_for_meld(db, 10))
-        similar_utterance_idx.update(get_sim_utterance_idx_for_iemocap(db, 10))
-
+        db_type = vectorstore_name.split("_")[2]
+        if db_type in ['flow', 'hybrid']:
+            window_size = int(vectorstore_name.split("_")[3])
+        else:
+            window_size = None
+        similar_utterance_idx = get_sim_utterance_idx_for_benchmark_datasets(db, top_n=top_n, db_type=db_type, window_size=window_size)
         save_as_json(f"caches/{vectorstore_name}.json", similar_utterance_idx)
 
     print("Done")
@@ -79,12 +113,13 @@ def main():
     parser.add_argument("--vectorstore_name", type=str, default=None,
                         help="Name of the vectorstore to use for cache. If None, cache with all vectorstores "
                              "whose has no cache. (Default: None)")
+    parser.add_argument("--top_n", type=int, default=10, help="Number of similar utterances to cache. (Default: 10)")
     args = parser.parse_args()
 
     if "vectorstore" not in os.getcwd():
         os.chdir("vectorstore")
 
-    cache_similar_utterances(args.vectorstore_name)
+    cache_similar_utterances(args.vectorstore_name, top_n=args.top_n)
 
 
 if __name__ == "__main__":

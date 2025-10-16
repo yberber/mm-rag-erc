@@ -1,8 +1,14 @@
+import os.path
+
 import pandas as pd
 import json
 from functools import wraps
 import time
 import re
+import chromadb
+
+
+PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -25,11 +31,35 @@ union_emotion_set_original = ['anger', 'disgust','excitement', 'fear', 'frustrat
 id_to_original_emotion = {i: e for i, e in enumerate(union_emotion_set_original)}
 original_emotion_to_id = {e: i for i, e in enumerate(union_emotion_set_original)}
 
+union_emotion_set_mapped = ['angry', 'disgusted','excited', 'fearful', 'frustrated',
+                     'joyful', 'neutral', 'sad', 'surprised']
+
+id_to_mapped_emotion = {i: e for i, e in enumerate(union_emotion_set_mapped)}
+mapped_emotion_to_id = {e: i for i, e in enumerate(union_emotion_set_mapped)}
+
 
 meld_emotion_mapper = {"joy": "joyful", "sadness": "sad", "neutral": "neutral",
                        "anger": "angry", "surprise": "surprised", "fear": "fearful", "disgust": "disgusted"}
 iemocap_emotion_mapper = {"happiness": "joyful", "sadness": "sad", "neutral": "neutral", "anger": "angry",
                           "excitement": "excited", "frustration": "frustrated"}
+
+meld_mapped_valid_emotion_set = set(["joyful", "sad", "neutral", "angry", "surprised", "fearful", "disgusted"])
+iemocap_mapped_valid_emotion_set = set(["joyful", "sad", "neutral", "angry", "excited", "frustrated"])
+
+emotion_mapper_ori_to_conv = {
+    'anger': 'angry',
+    'disgust': 'disgusted',
+    'excitement': 'excited',
+    'fear': 'fearful',
+    'frustration': 'frustrated',
+    'happiness': 'joyful',
+    'joy': 'joyful',
+    'neutral': 'neutral',
+    'other': 'unknown',
+    'sadness': 'sad',
+    'surprise': 'surprised',
+    'unknown': 'unknown'
+}
 
 meld_emotion_set_mapped = ['joyful', 'sad', 'neutral', 'angry', 'surprised', 'fearful', 'disgusted']
 assert meld_emotion_set_mapped == list(meld_emotion_mapper.values())
@@ -121,7 +151,11 @@ def save_as_json(path, data):
         json.dump(data, f, indent=4)
     print(f"Saved data to {path}")
 
-def load_json(path):
+def load_json(path=None, relative_path_from_project=None):
+    if path is None == relative_path_from_project is None:
+        print(f'one argument should be None, other non-None. But you gave {path} and {relative_path_from_project}')
+    if relative_path_from_project:
+        path = os.path.join(PROJECT_PATH, relative_path_from_project)
     with open(path, "r", encoding="utf-8") as f:
         loaded = json.load(f)
     return loaded
@@ -158,6 +192,60 @@ def anonymize_speakers_in_dialog(df_dialog, use_letters=False):
             case=False  # This makes the replacement case-insensitive
         )
     return df_dialog
+
+
+def chromadb_collection_exists(persist_directory: str, collection_name: str) -> bool:
+    """
+    Checks if a ChromaDB collection exists in the given directory.
+    """
+    client = chromadb.PersistentClient(path=persist_directory)
+    collections = client.list_collections()
+    return any(collection.name == collection_name for collection in collections)
+
+
+def collection_exists_and_not_empty(persist_directory: str, collection_name: str, throw_exception=False) -> bool:
+    """
+    Checks if a ChromaDB collection exists in a directory and is not empty.
+
+    Args:
+        persist_directory: The path to the ChromaDB persist directory.
+        collection_name: The name of the collection to check.
+
+    Returns:
+        True if the collection exists and contains one or more items, False otherwise.
+    """
+    client = chromadb.PersistentClient(path=persist_directory)
+    collections = client.list_collections()
+    if any(collection.name == collection_name for collection in collections):
+        collection = client.get_collection(name=collection_name)
+        res = collection.count() > 0
+        if throw_exception and not res :
+            raise ValueError(f"Collection {collection_name} is empty in {persist_directory}")
+        return res
+    if throw_exception:
+        raise ValueError(f"Collection {collection_name} does not exist in {persist_directory}. The list of collections at {persist_directory} is: {collections}")
+    return False
+
+def chdir_in_project(path):
+    os.chdir(os.path.join(PROJECT_PATH, path))
+
+def get_meld_iemocap_datasets_as_dataframe(splits=None):
+    meld_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "meld_erc_with_categories.csv")
+    iemocap_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "iemocap_erc_with_categories.csv")
+    meld_df = pd.read_csv(meld_path)
+    iemocap_df = pd.read_csv(iemocap_path)
+    if splits is None:
+        return meld_df, iemocap_df
+
+    if type(splits) is str:
+        return meld_df[meld_df['split']==splits], iemocap_df[iemocap_df['split'] == splits]
+
+    if type(splits) is list and len(splits):
+        return meld_df[meld_df['split'].isin(splits)], iemocap_df[iemocap_df['split'].isin(splits)]
+
+    raise Exception('splits must be either None, or str, or a non-empty list')
+
+
 
 # eval_folder = "EVAL_RESULTS/"
 #
