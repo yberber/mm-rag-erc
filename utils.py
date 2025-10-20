@@ -130,7 +130,9 @@ def load_json_multiline(path):
             data.append(json.loads(line))
     return data
 
-def dump_json_test_result(path, result, add_datetime_to_filename=False, verbose=True):
+def dump_json_test_result(result, path=None, relative_path_from_project=None, add_datetime_to_filename=False, verbose=True):
+    path = get_path(path=path, relative_path_from_project=relative_path_from_project)
+
     if add_datetime_to_filename:
         now = time.strftime("%b-%d-%Y_%H:%M:%S")
         now += ".json"
@@ -151,11 +153,33 @@ def save_as_json(path, data):
         json.dump(data, f, indent=4)
     print(f"Saved data to {path}")
 
-def load_json(path=None, relative_path_from_project=None):
+
+def save_dataframe_as_json(path, df, orient="index"):
+    df.to_json(path, orient=orient, indent=4)
+
+def load_dataframe_from_json(path=None, relative_path_from_project=None, orient="index"):
     if path is None == relative_path_from_project is None:
         print(f'one argument should be None, other non-None. But you gave {path} and {relative_path_from_project}')
     if relative_path_from_project:
         path = os.path.join(PROJECT_PATH, relative_path_from_project)
+    loaded = pd.read_json(path, orient=orient)
+    return loaded
+
+
+def get_path(path=None, relative_path_from_project=None):
+    if path is None == relative_path_from_project is None:
+        print(f'one argument should be None, other non-None. But you gave {path} and {relative_path_from_project}')
+    if relative_path_from_project:
+        path = os.path.join(PROJECT_PATH, relative_path_from_project)
+    return path
+
+def makedirs(path=None, relative_path_from_project=None):
+    path = get_path(path=path, relative_path_from_project=relative_path_from_project)
+    os.makedirs(path, exist_ok=True)
+
+
+def load_json(path=None, relative_path_from_project=None):
+    path = get_path(path=path, relative_path_from_project=relative_path_from_project)
     with open(path, "r", encoding="utf-8") as f:
         loaded = json.load(f)
     return loaded
@@ -167,7 +191,7 @@ def timing(func):
         ts = time.time()
         result = func(*args, **kwargs)
         te = time.time()
-        elapsed = te - ts
+        elapsed = round(te - ts, 2)
         print(f"func {func.__name__} took {elapsed} seconds")
         wrapper.elapsed_time = elapsed
         return result
@@ -229,6 +253,37 @@ def collection_exists_and_not_empty(persist_directory: str, collection_name: str
 def chdir_in_project(path):
     os.chdir(os.path.join(PROJECT_PATH, path))
 
+
+def get_dataset_as_dataframe(dataset_name, splits=None, columns=None):
+    if dataset_name.lower() == "meld":
+        meld_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "meld_erc_with_categories.csv")
+        df = pd.read_csv(meld_path)
+        df["erc_target"] = True
+    elif dataset_name.lower() == "iemocap":
+        iemocap_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "iemocap_erc_with_categories.csv")
+        df = pd.read_csv(iemocap_path)
+    else:
+        raise ValueError("Invalid dataset name")
+
+    if isinstance(splits, str):
+        splits = [splits]
+    if splits is not None:
+         df = df[df["split"].isin(splits)]
+    if columns is not None:
+        df = df[columns]
+    return df
+
+
+
+    if type(splits) is str:
+        return meld_df[meld_df['split']==splits], iemocap_df[iemocap_df['split'] == splits]
+
+    if type(splits) is list and len(splits):
+        return meld_df[meld_df['split'].isin(splits)], iemocap_df[iemocap_df['split'].isin(splits)]
+
+    raise Exception('splits must be either None, or str, or a non-empty list')
+
+
 def get_meld_iemocap_datasets_as_dataframe(splits=None):
     meld_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "meld_erc_with_categories.csv")
     iemocap_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "iemocap_erc_with_categories.csv")
@@ -245,6 +300,30 @@ def get_meld_iemocap_datasets_as_dataframe(splits=None):
 
     raise Exception('splits must be either None, or str, or a non-empty list')
 
+
+def get_vectordb_path_from_attributes(db_type: str, max_m: int = None):
+    if db_type.lower() == "single":
+        return "vectorstore/vectorstore_db/meld_iemocap_single"
+    elif db_type.lower() in ["flow", "hybrid"]:
+        return f"vectorstore/vectorstore_db/meld_iemocap_{db_type}_{max_m}"
+    else:
+        raise ValueError(f"Unknown db_type: {db_type}")
+
+def str2bool (val):
+    """Convert a string representation of truth to true  or false.
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    if isinstance(val, bool):
+        return val
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return True
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (val,))
 
 
 # eval_folder = "EVAL_RESULTS/"

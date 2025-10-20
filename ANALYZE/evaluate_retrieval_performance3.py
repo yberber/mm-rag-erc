@@ -243,18 +243,6 @@ def main():
         print(f"❌ Error: No cache files found in {CACHE_DIR}")
         return
 
-    # # --- 1. Run analysis on the COMPLETE test set (Final Utterance Emotion) ---
-    # df_summary_all = run_analysis_pipeline(cache_paths, df_test, idx_to_emotion_map)
-    # display_results(df_summary_all, "Top-1 Performance (Final Utterance Emotion)")
-    #
-    # # --- 2. Run analysis EXCLUDING 'neutral' (Final Utterance Emotion) ---
-    # df_test_no_neutral = df_test[df_test['mapped_emotion'] != 'neutral'].copy()
-    # df_summary_no_neutral = run_analysis_pipeline(cache_paths, df_test_no_neutral, idx_to_emotion_map)
-    # display_results(df_summary_no_neutral, "Top-1 Performance (Final Utterance, Excl. 'neutral')")
-    #
-    # # --- 3. Run analysis based on PREDOMINANT emotion in retrieved flow ---
-    # df_summary_predominant = run_analysis_pipeline_predominant(cache_paths, df_test, df_train, idx_to_emotion_map)
-    # display_results(df_summary_predominant, "Top-1 Performance (Based on Predominant Emotion)")
 
     # --- 1. Run analysis on the COMPLETE test set ---
     df_summary_all, results_dict_all = run_analysis_pipeline(cache_paths, df_test, idx_to_emotion_map)  # MODIFICATION
