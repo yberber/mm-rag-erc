@@ -254,7 +254,7 @@ def create_model_chain(model_id: int, prompt_type, add_example):
     if model_id == 0:
         model = load_model_via_ollama()
     elif model_id == 1:
-        model = load_model_via_ollama()
+        model = load_model_via_hf()
     elif model_id == 2 or model_id == 3:
         raise Exception(f"Model {model_id} is not implemented.")
     else:
