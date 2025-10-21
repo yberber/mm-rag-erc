@@ -24,7 +24,6 @@ from utils import (
 from prompts import (EMOTION_RECOGNITION_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT, CLAUDE_EMOTION_RECOGNITION_PROMPT
 , GPT5_EMOTION_RECOGNITION_PROMPT)
 
-
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(

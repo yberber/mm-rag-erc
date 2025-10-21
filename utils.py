@@ -9,6 +9,7 @@ import chromadb
 
 
 PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings

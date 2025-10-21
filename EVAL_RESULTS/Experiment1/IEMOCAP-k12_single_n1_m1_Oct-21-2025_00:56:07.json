@@ -1,0 +1,3042 @@
+{
+    "test_info": {
+        "config": {
+            "dataset": "iemocap",
+            "max_k": 12,
+            "example_type": "single",
+            "top_n": 1,
+            "max_m": 1,
+            "use_detailed_example": false,
+            "limit": null,
+            "load_model_via": "hf",
+            "split": "dev",
+            "save": true,
+            "experiment_id": 1,
+            "prompt_type": "gpt5"
+        },
+        "data_path": "PROCESSED_DATASET/IEMOCAP/k12_single_n1_m1/dev.json",
+        "elapsed_time_in_sec": 154,
+        "prompt_name": "GPT5_EMOTION_RECOGNITION_PROMPT",
+        "prompt_template": "\nYou are a careful emotion classifier.\n\nTASK\n- Pick exactly ONE label from the allowed set.\n- Do NOT invent new labels.\n- Answer with ONLY the label text, nothing else.\n\nALLOWED_LABELS\n<{candidate_emotions}>\n\nDECISION POLICY\n- Prioritize the current utterance first, then conversation history, then audio cues.\n- If cues conflict, prefer the utterance's literal meaning.\n- If uncertainty remains between two or more labels, choose the most non-committal one present in ALLOWED_LABELS\n  (e.g., \"neutral\" or \"other\"/\"unknown\" if provided).\n\nCONTEXT\nFew-shot examples:\n{demonstrations}\n\nConversation (delimited by ###):\n###\n{history}\n###\n\nTARGET\nSpeaker: \"{speaker_id}\"\nUtterance: \"{utterance}\"\nAudio descriptors: {audio_features}\n\nOUTPUT\nReturn ONLY one label from ALLOWED_LABELS.\n",
+        "used_model": "Meta-Llama-3.1-8B-Instruct via HF",
+        "emotion_set": [
+            "joyful",
+            "sad",
+            "neutral",
+            "angry",
+            "excited",
+            "frustrated"
+        ],
+        "stats": {
+            "accuracy_score": 0.33,
+            "f1_score": 0.28,
+            "correct_count": 196,
+            "prediction_count": 600,
+            "start_time": "2025-10-21 00:53:33",
+            "end_time": "2025-10-21 00:56:07",
+            "elapsed_time": "0:02:34"
+        }
+    },
+    "test_outputs": [
+        {
+            "pred": "sad\n\n###  I am really happy that we",
+            "actual": "frustrated",
+            "iden": "i_108_0"
+        },
+        {
+            "pred": "frustrated\n\nALLOWED_LABELS\n<",
+            "actual": "frustrated",
+            "iden": "i_108_1"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- Speaker's tone and speech",
+            "actual": "neutral",
+            "iden": "i_108_2"
+        },
+        {
+            "pred": "sad\n\n###\n\n\n\nM: You know, I",
+            "actual": "frustrated",
+            "iden": "i_108_3"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nM: But I mean,",
+            "actual": "frustrated",
+            "iden": "i_108_4"
+        },
+        {
+            "pred": "frustrated\n\nThe final answer is frustrated.",
+            "actual": "neutral",
+            "iden": "i_108_5"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n###\n\n\nWhat about the new",
+            "actual": "neutral",
+            "iden": "i_108_6"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker is providing an",
+            "actual": "neutral",
+            "iden": "i_108_7"
+        },
+        {
+            "pred": "neutral\n###  #######  ###  ####",
+            "actual": "frustrated",
+            "iden": "i_108_8"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nNote: For the sake of",
+            "actual": "neutral",
+            "iden": "i_108_9"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe speaker's low speech rate",
+            "actual": "frustrated",
+            "iden": "i_108_10"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker's tone, pitch",
+            "actual": "neutral",
+            "iden": "i_108_11"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "frustrated",
+            "iden": "i_108_12"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker is expressing a strong",
+            "actual": "frustrated",
+            "iden": "i_108_13"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\n###\n\n\n\n###\n\n\n###\n\n\n\n",
+            "actual": "neutral",
+            "iden": "i_108_14"
+        },
+        {
+            "pred": "angry\n\n---\n\nExplanation:\nThe speaker uses a",
+            "actual": "frustrated",
+            "iden": "i_108_15"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTASK\nSpeaker: \"M",
+            "actual": "neutral",
+            "iden": "i_108_16"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "neutral",
+            "iden": "i_108_17"
+        },
+        {
+            "pred": "angry\n\nExplanation: \nThe speaker's low",
+            "actual": "frustrated",
+            "iden": "i_108_18"
+        },
+        {
+            "pred": "neutral\njustification: The utterance's literal",
+            "actual": "frustrated",
+            "iden": "i_108_19"
+        },
+        {
+            "pred": "neutral\n\nNote: The decision policy is a combination",
+            "actual": "frustrated",
+            "iden": "i_108_20"
+        },
+        {
+            "pred": "<neutral>  # or another label from ALLOW",
+            "actual": "neutral",
+            "iden": "i_108_21"
+        },
+        {
+            "pred": "excited\n###\n\n\nANSWER: \nang",
+            "actual": "frustrated",
+            "iden": "i_108_22"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\n\nYour model should classify the speaker",
+            "actual": "neutral",
+            "iden": "i_108_23"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nGiven the conversation history,",
+            "actual": "frustrated",
+            "iden": "i_108_24"
+        },
+        {
+            "pred": "angry\n\nExplanation: \n- The utterance",
+            "actual": "frustrated",
+            "iden": "i_108_26"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker is questioning the logic",
+            "actual": "neutral",
+            "iden": "i_108_27"
+        },
+        {
+            "pred": "neutral\n\nREASONING\n- The utterance",
+            "actual": "frustrated",
+            "iden": "i_108_28"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- The utterance is a",
+            "actual": "neutral",
+            "iden": "i_108_29"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker says \"Yeah\"",
+            "actual": "frustrated",
+            "iden": "i_108_30"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance is",
+            "actual": "neutral",
+            "iden": "i_108_31"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nBased on the given context",
+            "actual": "frustrated",
+            "iden": "i_108_32"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker uses phrases like",
+            "actual": "frustrated",
+            "iden": "i_108_33"
+        },
+        {
+            "pred": "sad\n```python\nALLOWED_LABELS =",
+            "actual": "neutral",
+            "iden": "i_108_35"
+        },
+        {
+            "pred": "neutral\n\nRationale: \n- The utterance",
+            "actual": "neutral",
+            "iden": "i_108_36"
+        },
+        {
+            "pred": "angry\n\nExplanation: The utterance's literal",
+            "actual": "neutral",
+            "iden": "i_108_37"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker's utterance",
+            "actual": "neutral",
+            "iden": "i_108_38"
+        },
+        {
+            "pred": "angry\n\n**Explanation**: The utterance is",
+            "actual": "neutral",
+            "iden": "i_108_39"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe label is neutral because",
+            "actual": "neutral",
+            "iden": "i_108_40"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "frustrated",
+            "iden": "i_109_0"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nGiven the utterance and",
+            "actual": "neutral",
+            "iden": "i_109_1"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n###\nM: I need help",
+            "actual": "neutral",
+            "iden": "i_109_3"
+        },
+        {
+            "pred": "sad\n\n### (no response) ###\n\nTARGET",
+            "actual": "frustrated",
+            "iden": "i_109_4"
+        },
+        {
+            "pred": "sad\n\n###\n\n\n\n###\nM: I love this",
+            "actual": "neutral",
+            "iden": "i_109_5"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nSpeaker \"F\" responds with",
+            "actual": "neutral",
+            "iden": "i_109_6"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nBased on the utterance,",
+            "actual": "frustrated",
+            "iden": "i_109_7"
+        },
+        {
+            "pred": "<neutral>  # Your response here  #",
+            "actual": "frustrated",
+            "iden": "i_109_10"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker seems to be",
+            "actual": "frustrated",
+            "iden": "i_109_11"
+        },
+        {
+            "pred": "sad\n\nExplanation:\n- \"I'm sorry\"",
+            "actual": "frustrated",
+            "iden": "i_109_12"
+        },
+        {
+            "pred": "sad\n```python\ndef classify_emotion(",
+            "actual": "frustrated",
+            "iden": "i_109_13"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTASK\nSpeaker: \"M",
+            "actual": "neutral",
+            "iden": "i_109_14"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- Speaker \"F\" is",
+            "actual": "neutral",
+            "iden": "i_109_15"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker is apolo",
+            "actual": "neutral",
+            "iden": "i_109_16"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's utterance",
+            "actual": "angry",
+            "iden": "i_109_17"
+        },
+        {
+            "pred": "angry\n###\n\n\nLet's start with the",
+            "actual": "angry",
+            "iden": "i_109_18"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the utterance,",
+            "actual": "neutral",
+            "iden": "i_109_19"
+        },
+        {
+            "pred": "neutral\nfrustrated\nangry\nneutral",
+            "actual": "angry",
+            "iden": "i_109_20"
+        },
+        {
+            "pred": "angry\n\nNote:  Audio cues don't",
+            "actual": "angry",
+            "iden": "i_109_21"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "frustrated",
+            "iden": "i_109_22"
+        },
+        {
+            "pred": "sad\n###\n\n\n### \nM: I'm",
+            "actual": "neutral",
+            "iden": "i_109_23"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker \"M\"",
+            "actual": "frustrated",
+            "iden": "i_109_24"
+        },
+        {
+            "pred": "angry\n\n### ### ###\n\nYou are a",
+            "actual": "angry",
+            "iden": "i_109_26"
+        },
+        {
+            "pred": "neutral\n\n### is a delimiter to separate the conversation",
+            "actual": "frustrated",
+            "iden": "i_109_27"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's utterance is",
+            "actual": "angry",
+            "iden": "i_109_28"
+        },
+        {
+            "pred": "neutral\n###\n\n\nOUTPUT\nReturn ONLY one label",
+            "actual": "angry",
+            "iden": "i_109_29"
+        },
+        {
+            "pred": "neutral\n###  ###  ###  ### ",
+            "actual": "neutral",
+            "iden": "i_109_30"
+        },
+        {
+            "pred": "angry\n###\n\n\nYou are a careful emotion",
+            "actual": "angry",
+            "iden": "i_109_31"
+        },
+        {
+            "pred": "excited\n```python\ndef classify_emotion",
+            "actual": "angry",
+            "iden": "i_109_32"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nSpeaker F is apologetic",
+            "actual": "frustrated",
+            "iden": "i_109_33"
+        },
+        {
+            "pred": "neutral\n___\n___\n___\n___\n",
+            "actual": "frustrated",
+            "iden": "i_109_34"
+        },
+        {
+            "pred": "neutral\n\nRationale\nSpeaker \"F\" is",
+            "actual": "frustrated",
+            "iden": "i_109_35"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n# I'm very sorry.\n",
+            "actual": "frustrated",
+            "iden": "i_109_37"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker, F, is",
+            "actual": "neutral",
+            "iden": "i_109_38"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_109_39"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is neutral.",
+            "actual": "frustrated",
+            "iden": "i_109_40"
+        },
+        {
+            "pred": "angry\nExplanation: The speaker's utterance",
+            "actual": "neutral",
+            "iden": "i_109_41"
+        },
+        {
+            "pred": "angry\n###  END  ###\n\n ",
+            "actual": "angry",
+            "iden": "i_109_42"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nThe final answer is neutral.",
+            "actual": "neutral",
+            "iden": "i_109_43"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker is being apolo",
+            "actual": "frustrated",
+            "iden": "i_109_44"
+        },
+        {
+            "pred": "frustrated\n###\n\n\n\n###\n\n\n\n###\n\n\n\n",
+            "actual": "frustrated",
+            "iden": "i_109_46"
+        },
+        {
+            "pred": "angry\n\n**Explanation:**\n\nThe speaker (\"",
+            "actual": "frustrated",
+            "iden": "i_109_47"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nExplanation: The speaker is expressing",
+            "actual": "frustrated",
+            "iden": "i_109_48"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nSpeaker M's utterance is",
+            "actual": "frustrated",
+            "iden": "i_109_49"
+        },
+        {
+            "pred": "frustrated\n###\n\n\nEND OF CONTEXT.",
+            "actual": "angry",
+            "iden": "i_109_50"
+        },
+        {
+            "pred": "sad\n###\n\n\nExplanation:\nThe speaker's utter",
+            "actual": "frustrated",
+            "iden": "i_109_51"
+        },
+        {
+            "pred": "<neutral>  # Correct classification of the target",
+            "actual": "frustrated",
+            "iden": "i_109_52"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nExplanation:\nThe speaker is stating",
+            "actual": "frustrated",
+            "iden": "i_109_53"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_109_54"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nThe final answer is: sad",
+            "actual": "frustrated",
+            "iden": "i_109_55"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nThis problem is a classification task",
+            "actual": "frustrated",
+            "iden": "i_109_56"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_109_57"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker uses \"see",
+            "actual": "frustrated",
+            "iden": "i_109_58"
+        },
+        {
+            "pred": "angry\n###\n\n\n\n### \nSpeaker: \"",
+            "actual": "frustrated",
+            "iden": "i_109_59"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nSpeaker \"M\" expresses",
+            "actual": "frustrated",
+            "iden": "i_109_60"
+        },
+        {
+            "pred": "angry\n\n###\n\n\n\nHere is the next conversation",
+            "actual": "frustrated",
+            "iden": "i_109_61"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- The utterance's",
+            "actual": "frustrated",
+            "iden": "i_109_62"
+        },
+        {
+            "pred": "excited\n\nExplanation:\nThe speaker uses the phrase",
+            "actual": "frustrated",
+            "iden": "i_109_63"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n1. Prioritize the utter",
+            "actual": "frustrated",
+            "iden": "i_109_64"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker is offering a solution",
+            "actual": "frustrated",
+            "iden": "i_109_65"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \n- Speaker \"M\"",
+            "actual": "frustrated",
+            "iden": "i_109_66"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance is",
+            "actual": "frustrated",
+            "iden": "i_109_67"
+        },
+        {
+            "pred": "angry\n\nReasoning: \n- The utter",
+            "actual": "frustrated",
+            "iden": "i_109_68"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- The utterance \"",
+            "actual": "frustrated",
+            "iden": "i_109_69"
+        },
+        {
+            "pred": "neutral\n\nRationale: Based on the current utter",
+            "actual": "frustrated",
+            "iden": "i_109_70"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nThe speaker's apology and",
+            "actual": "frustrated",
+            "iden": "i_109_71"
+        },
+        {
+            "pred": "excited\n\nExplanation:\nThe speaker's words convey",
+            "actual": "frustrated",
+            "iden": "i_109_72"
+        },
+        {
+            "pred": "neutral\n###\n\n\n###\n\n\n###\n\n\n###\n\n\n",
+            "actual": "neutral",
+            "iden": "i_109_73"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker, M, is",
+            "actual": "frustrated",
+            "iden": "i_109_74"
+        },
+        {
+            "pred": "neutral\n\n### 2019-12-04",
+            "actual": "neutral",
+            "iden": "i_109_75"
+        },
+        {
+            "pred": "neutral\n```python\ndef classify_emotion(",
+            "actual": "angry",
+            "iden": "i_109_76"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker's utterance",
+            "actual": "frustrated",
+            "iden": "i_109_77"
+        },
+        {
+            "pred": "angry\n\nExplanation: \nThe speaker's utter",
+            "actual": "angry",
+            "iden": "i_109_78"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\nThe speaker is",
+            "actual": "frustrated",
+            "iden": "i_109_79"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker says \"",
+            "actual": "frustrated",
+            "iden": "i_109_80"
+        },
+        {
+            "pred": "angry\n\nExplanation: The speaker uses a tone",
+            "actual": "frustrated",
+            "iden": "i_109_81"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nBased on the conversation",
+            "actual": "frustrated",
+            "iden": "i_109_82"
+        },
+        {
+            "pred": "angry\n\n---\n\nTASK\n- Pick exactly ONE",
+            "actual": "frustrated",
+            "iden": "i_109_83"
+        },
+        {
+            "pred": "neutral\n```python\nALLOWED_LABELS =",
+            "actual": "frustrated",
+            "iden": "i_109_84"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nPlease choose one label from the",
+            "actual": "frustrated",
+            "iden": "i_109_85"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "frustrated",
+            "iden": "i_109_86"
+        },
+        {
+            "pred": "angry\n###\n\n\nYou are a careful emotion",
+            "actual": "angry",
+            "iden": "i_109_87"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nPlease, pick the label",
+            "actual": "angry",
+            "iden": "i_109_88"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- The speaker uses a",
+            "actual": "sad",
+            "iden": "i_110_0"
+        },
+        {
+            "pred": "sad\n\n### \nF: Hey, how you",
+            "actual": "sad",
+            "iden": "i_110_1"
+        },
+        {
+            "pred": "neutral\n###\n\n\n###\nF: I'm so",
+            "actual": "sad",
+            "iden": "i_110_2"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\n- The speaker's utter",
+            "actual": "sad",
+            "iden": "i_110_3"
+        },
+        {
+            "pred": "angry\n###\n\n\n###\n\n\n###\n\n\n###",
+            "actual": "sad",
+            "iden": "i_110_4"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker (\"M\") is",
+            "actual": "sad",
+            "iden": "i_110_5"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the utterance,",
+            "actual": "sad",
+            "iden": "i_110_6"
+        },
+        {
+            "pred": "neutral\n###  F:  Hey, how",
+            "actual": "sad",
+            "iden": "i_110_7"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nBased on the conversation history,",
+            "actual": "sad",
+            "iden": "i_110_8"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nThe speaker, \"",
+            "actual": "sad",
+            "iden": "i_110_9"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- The speaker is acknowledging that",
+            "actual": "sad",
+            "iden": "i_110_10"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe utterance \"I",
+            "actual": "sad",
+            "iden": "i_110_11"
+        },
+        {
+            "pred": "angry\n\nExplanation:\n1. The utterance",
+            "actual": "sad",
+            "iden": "i_110_12"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nBased on the conversation",
+            "actual": "sad",
+            "iden": "i_110_13"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nWhat is the emotion label of",
+            "actual": "sad",
+            "iden": "i_110_14"
+        },
+        {
+            "pred": "angry\n\nNote that the speaker says \"feel",
+            "actual": "sad",
+            "iden": "i_110_15"
+        },
+        {
+            "pred": "sad\n\n###  ###  ###  ### ",
+            "actual": "sad",
+            "iden": "i_110_16"
+        },
+        {
+            "pred": "angry\n\n###\n\n\n\nPlease classify the emotion of",
+            "actual": "sad",
+            "iden": "i_110_17"
+        },
+        {
+            "pred": "sad\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "sad",
+            "iden": "i_110_18"
+        },
+        {
+            "pred": "excited\n```python\nALLOWED_LABELS",
+            "actual": "sad",
+            "iden": "i_110_19"
+        },
+        {
+            "pred": "sad\n###\n\n\nANSWER: sad\n\nExplanation",
+            "actual": "sad",
+            "iden": "i_110_20"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker expresses a conflicted",
+            "actual": "sad",
+            "iden": "i_110_21"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER: \nneutral\n",
+            "actual": "sad",
+            "iden": "i_110_22"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker says they know",
+            "actual": "sad",
+            "iden": "i_110_23"
+        },
+        {
+            "pred": "neutral\n\nThe speaker says \"This is just --",
+            "actual": "sad",
+            "iden": "i_110_24"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER: \nneutral\n\n",
+            "actual": "sad",
+            "iden": "i_110_26"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nThe final answer is $\\",
+            "actual": "sad",
+            "iden": "i_110_27"
+        },
+        {
+            "pred": "sad\n\n### 1.6.3.",
+            "actual": "sad",
+            "iden": "i_110_28"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- The speaker says \"I",
+            "actual": "sad",
+            "iden": "i_110_29"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nUtterance is an inquiry",
+            "actual": "sad",
+            "iden": "i_110_30"
+        },
+        {
+            "pred": "<neutral>  # or another label from ALLOW",
+            "actual": "sad",
+            "iden": "i_110_31"
+        },
+        {
+            "pred": "neutral\n___\n___\n___\n___\n",
+            "actual": "sad",
+            "iden": "i_110_32"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nThe speaker is empathizing with",
+            "actual": "sad",
+            "iden": "i_110_33"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker's utterance",
+            "actual": "sad",
+            "iden": "i_110_34"
+        },
+        {
+            "pred": "neutral\n\nJustification:\n- The utterance is",
+            "actual": "sad",
+            "iden": "i_110_35"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\n###\n\n\nSpeaker: \"M",
+            "actual": "sad",
+            "iden": "i_110_36"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker is not expressing any",
+            "actual": "sad",
+            "iden": "i_110_37"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker uses phrases like \"",
+            "actual": "sad",
+            "iden": "i_110_38"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance is",
+            "actual": "sad",
+            "iden": "i_110_39"
+        },
+        {
+            "pred": "excited\nsad\nneutral\nangry\n",
+            "actual": "sad",
+            "iden": "i_110_40"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n###\nM: I am so",
+            "actual": "excited",
+            "iden": "i_111_0"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nBased on the context provided",
+            "actual": "excited",
+            "iden": "i_111_1"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- The literal meaning of",
+            "actual": "excited",
+            "iden": "i_111_4"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nThe speaker's tone",
+            "actual": "excited",
+            "iden": "i_111_5"
+        },
+        {
+            "pred": "neutral\n\nREASONING\n- The literal meaning",
+            "actual": "excited",
+            "iden": "i_111_6"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nExplanation\nThe classifier chooses",
+            "actual": "excited",
+            "iden": "i_111_7"
+        },
+        {
+            "pred": "neutral\n###\n\n\n### \nM: I'm",
+            "actual": "excited",
+            "iden": "i_111_8"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker is asking a",
+            "actual": "excited",
+            "iden": "i_111_10"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- Utterance literal",
+            "actual": "joyful",
+            "iden": "i_111_13"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance \"",
+            "actual": "excited",
+            "iden": "i_111_14"
+        },
+        {
+            "pred": "<neutral>",
+            "actual": "joyful",
+            "iden": "i_111_15"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "excited",
+            "iden": "i_111_16"
+        },
+        {
+            "pred": "neutral\n###\n\n\n---\n\nTASK\n- Pick exactly",
+            "actual": "joyful",
+            "iden": "i_111_17"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "excited",
+            "iden": "i_111_18"
+        },
+        {
+            "pred": "excited\n\nExplanation:\n- The utterance itself",
+            "actual": "joyful",
+            "iden": "i_111_19"
+        },
+        {
+            "pred": "excited\n\nExplanation:\nThe speaker \"M\"",
+            "actual": "joyful",
+            "iden": "i_111_20"
+        },
+        {
+            "pred": "neutral\n\nRationale\nThe speaker's utterance",
+            "actual": "excited",
+            "iden": "i_111_21"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "joyful",
+            "iden": "i_111_22"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nConversation (delimited by ###",
+            "actual": "excited",
+            "iden": "i_111_23"
+        },
+        {
+            "pred": "Answer: \nexcited\n###\n\n\nExplanation:",
+            "actual": "joyful",
+            "iden": "i_111_24"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker's utterance",
+            "actual": "joyful",
+            "iden": "i_111_25"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker seems to be showing",
+            "actual": "excited",
+            "iden": "i_111_26"
+        },
+        {
+            "pred": "neutral\n\n### END OF CONVERSATION ###\n\n",
+            "actual": "excited",
+            "iden": "i_111_27"
+        },
+        {
+            "pred": "excited\n\n###\n\n\n\n###\n\n\n\n###\n\n\n\n###",
+            "actual": "excited",
+            "iden": "i_111_28"
+        },
+        {
+            "pred": "neutral\nExplanation:\nThe speaker's utterance \"",
+            "actual": "excited",
+            "iden": "i_111_29"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance is",
+            "actual": "excited",
+            "iden": "i_111_31"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is neutral.",
+            "actual": "excited",
+            "iden": "i_111_33"
+        },
+        {
+            "pred": "neutral\n\nRationale\nSpeaker \"F\" ut",
+            "actual": "excited",
+            "iden": "i_111_35"
+        },
+        {
+            "pred": "neutral\n\nRationale\n- The literal meaning of",
+            "actual": "excited",
+            "iden": "i_111_37"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nIn this dialogue, speaker",
+            "actual": "excited",
+            "iden": "i_111_38"
+        },
+        {
+            "pred": "excited\n\nExplanation:\n- The speaker is discussing",
+            "actual": "excited",
+            "iden": "i_111_39"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nEND OF CONVERSATION\n",
+            "actual": "excited",
+            "iden": "i_111_40"
+        },
+        {
+            "pred": "neutral\nExplanation: \n- The speaker's utter",
+            "actual": "neutral",
+            "iden": "i_111_47"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nExplanation: \n\nThe speaker,",
+            "actual": "excited",
+            "iden": "i_111_48"
+        },
+        {
+            "pred": "angry\n-NO-  I will follow",
+            "actual": "neutral",
+            "iden": "i_111_49"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER:\nneutral\n###",
+            "actual": "neutral",
+            "iden": "i_111_50"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker's tone,",
+            "actual": "neutral",
+            "iden": "i_111_55"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER:\nneutral\n###",
+            "actual": "neutral",
+            "iden": "i_111_56"
+        },
+        {
+            "pred": "excited\n###\n\n\nExplanation:\nSpeaker \"M",
+            "actual": "neutral",
+            "iden": "i_111_57"
+        },
+        {
+            "pred": "neutral\nexcited\nsad\nangry\n",
+            "actual": "excited",
+            "iden": "i_111_58"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\n\nThe speaker (M",
+            "actual": "neutral",
+            "iden": "i_111_60"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nHere's another one:\n\nCONTEXT",
+            "actual": "neutral",
+            "iden": "i_111_66"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n  <joyful, sad",
+            "actual": "neutral",
+            "iden": "i_111_68"
+        },
+        {
+            "pred": "angry\n###\n\n\n### (empty line for",
+            "actual": "neutral",
+            "iden": "i_111_70"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nAudio descriptors indicate a medium",
+            "actual": "neutral",
+            "iden": "i_111_76"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n---\n\nTASK\n- Pick exactly",
+            "actual": "neutral",
+            "iden": "i_111_77"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nThe speaker's words suggest",
+            "actual": "neutral",
+            "iden": "i_111_78"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nThe final answer is: neutral",
+            "actual": "neutral",
+            "iden": "i_111_79"
+        },
+        {
+            "pred": "neutral\n###\n\n\nLet's continue the conversation:\n\n",
+            "actual": "neutral",
+            "iden": "i_111_80"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nThe final answer is: neutral",
+            "actual": "neutral",
+            "iden": "i_111_82"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker is using a formal",
+            "actual": "frustrated",
+            "iden": "i_112_0"
+        },
+        {
+            "pred": "sad\n\n### \nM: I see, I",
+            "actual": "frustrated",
+            "iden": "i_112_1"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe speaker, \"M\",",
+            "actual": "neutral",
+            "iden": "i_112_2"
+        },
+        {
+            "pred": "excited\n\nRationale\nThe speaker's tone",
+            "actual": "frustrated",
+            "iden": "i_112_3"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nExplanation:\nThe speaker (M",
+            "actual": "frustrated",
+            "iden": "i_112_4"
+        },
+        {
+            "pred": "neutral\n\nRationale\nThe speaker's literal meaning",
+            "actual": "frustrated",
+            "iden": "i_112_5"
+        },
+        {
+            "pred": "angry\n###\n\n\nCONTEXT\nFew-shot examples",
+            "actual": "frustrated",
+            "iden": "i_112_6"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nThis utterance,",
+            "actual": "frustrated",
+            "iden": "i_112_7"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nGiven the utterance",
+            "actual": "neutral",
+            "iden": "i_112_8"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker utters \"U",
+            "actual": "neutral",
+            "iden": "i_112_10"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nThe utterance is",
+            "actual": "neutral",
+            "iden": "i_112_12"
+        },
+        {
+            "pred": "neutral\n\nReasoning: The speaker is explaining a",
+            "actual": "frustrated",
+            "iden": "i_112_13"
+        },
+        {
+            "pred": "angry\n\nJustification:\n- The speaker is",
+            "actual": "frustrated",
+            "iden": "i_112_14"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_112_15"
+        },
+        {
+            "pred": "excited\n```python\nALLOWED_LABELS",
+            "actual": "frustrated",
+            "iden": "i_112_16"
+        },
+        {
+            "pred": "angry\n###\n\n\nI can't help you",
+            "actual": "neutral",
+            "iden": "i_112_17"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker says \"I did",
+            "actual": "frustrated",
+            "iden": "i_112_18"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the audio descriptors,",
+            "actual": "frustrated",
+            "iden": "i_112_19"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_112_20"
+        },
+        {
+            "pred": "neutral\n\n### 2016-02-12",
+            "actual": "neutral",
+            "iden": "i_112_21"
+        },
+        {
+            "pred": "neutral\n###\n\n\n### Conversation (delimited by",
+            "actual": "frustrated",
+            "iden": "i_112_22"
+        },
+        {
+            "pred": "excited\n```python\ndef classify_emotion",
+            "actual": "frustrated",
+            "iden": "i_112_23"
+        },
+        {
+            "pred": "sad\n\nRATIONALE\nPrioritizing the utter",
+            "actual": "neutral",
+            "iden": "i_112_24"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation\nSpeaker M's tone",
+            "actual": "neutral",
+            "iden": "i_112_25"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTARGET\nSpeaker: \"M",
+            "actual": "neutral",
+            "iden": "i_112_26"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker's utterance is",
+            "actual": "frustrated",
+            "iden": "i_112_27"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker says \"I'm",
+            "actual": "frustrated",
+            "iden": "i_112_28"
+        },
+        {
+            "pred": "angry\n###\n\n\nALLOWED_LABELS\n",
+            "actual": "frustrated",
+            "iden": "i_112_30"
+        },
+        {
+            "pred": "Answer: neutral\n\nExplanation:\nThe speaker seems to",
+            "actual": "frustrated",
+            "iden": "i_112_31"
+        },
+        {
+            "pred": "neutral\n###\n\n\nSpeaker: \"F\"\nUt",
+            "actual": "frustrated",
+            "iden": "i_112_32"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nNote: The conversation is between",
+            "actual": "frustrated",
+            "iden": "i_112_33"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker is trying",
+            "actual": "frustrated",
+            "iden": "i_112_34"
+        },
+        {
+            "pred": "neutral\n###\n\n\nOUTPUT\nReturn ONLY one label",
+            "actual": "neutral",
+            "iden": "i_112_35"
+        },
+        {
+            "pred": "frustrated\n###\n\n\nTASK\n- Pick",
+            "actual": "frustrated",
+            "iden": "i_112_36"
+        },
+        {
+            "pred": "<frustrated>  # I chose this",
+            "actual": "frustrated",
+            "iden": "i_112_37"
+        },
+        {
+            "pred": "sad\n###\n\n\nThis problem is a classification task",
+            "actual": "neutral",
+            "iden": "i_112_39"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's tone is not",
+            "actual": "neutral",
+            "iden": "i_112_40"
+        },
+        {
+            "pred": "neutral\n---\n\n**Explanation:** \nThe speaker,",
+            "actual": "neutral",
+            "iden": "i_112_41"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "neutral",
+            "iden": "i_112_43"
+        },
+        {
+            "pred": "neutral\njustified by: speaker's tone and",
+            "actual": "joyful",
+            "iden": "i_112_44"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- Utterance: \"",
+            "actual": "neutral",
+            "iden": "i_112_45"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker expresses gratitude",
+            "actual": "joyful",
+            "iden": "i_112_46"
+        },
+        {
+            "pred": "neutral\n\nExplanation:  The speaker's utterance",
+            "actual": "neutral",
+            "iden": "i_112_47"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER: neutral\n\nThe",
+            "actual": "joyful",
+            "iden": "i_112_48"
+        },
+        {
+            "pred": "neutral\n```python\nimport nltk\nfrom nltk",
+            "actual": "neutral",
+            "iden": "i_112_49"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker is making an effort",
+            "actual": "neutral",
+            "iden": "i_112_51"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- Utterance is",
+            "actual": "neutral",
+            "iden": "i_112_53"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nBased on the conversation history,",
+            "actual": "neutral",
+            "iden": "i_112_54"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "neutral",
+            "iden": "i_112_55"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker's tone",
+            "actual": "neutral",
+            "iden": "i_112_56"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the conversation history,",
+            "actual": "neutral",
+            "iden": "i_112_58"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nUtterance is literally \"",
+            "actual": "neutral",
+            "iden": "i_112_59"
+        },
+        {
+            "pred": "neutral\n\nREASONING\n- The utterance",
+            "actual": "neutral",
+            "iden": "i_113_0"
+        },
+        {
+            "pred": "neutral\n###\n\n\nWhat's the probability that the",
+            "actual": "neutral",
+            "iden": "i_113_1"
+        },
+        {
+            "pred": "excited\n```python\nALLOWED_LABELS",
+            "actual": "neutral",
+            "iden": "i_113_3"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker's utterance is",
+            "actual": "sad",
+            "iden": "i_113_14"
+        },
+        {
+            "pred": "excited\n```python\nALLOWED_LABELS",
+            "actual": "frustrated",
+            "iden": "i_113_15"
+        },
+        {
+            "pred": "neutral\n###  F: We can't let",
+            "actual": "frustrated",
+            "iden": "i_113_18"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\nIn this scenario",
+            "actual": "frustrated",
+            "iden": "i_113_20"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n## Step 1: Analy",
+            "actual": "frustrated",
+            "iden": "i_113_21"
+        },
+        {
+            "pred": "neutral\n# \n###  ###\n\n## Step",
+            "actual": "angry",
+            "iden": "i_113_24"
+        },
+        {
+            "pred": "excited\n\nRationale:  The speaker's",
+            "actual": "angry",
+            "iden": "i_113_25"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\n\nThe speaker, F",
+            "actual": "angry",
+            "iden": "i_113_26"
+        },
+        {
+            "pred": "angry\n\nExplanation: Based on the given context",
+            "actual": "angry",
+            "iden": "i_113_27"
+        },
+        {
+            "pred": "angry\n\nExplanation: Based on the utterance",
+            "actual": "angry",
+            "iden": "i_113_28"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the speaker's utter",
+            "actual": "frustrated",
+            "iden": "i_113_31"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- Based on the conversation history",
+            "actual": "neutral",
+            "iden": "i_113_32"
+        },
+        {
+            "pred": "neutral\n\n### M: I don't want to",
+            "actual": "frustrated",
+            "iden": "i_113_33"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation\nThe speaker \"M",
+            "actual": "neutral",
+            "iden": "i_113_35"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker says \"Well that",
+            "actual": "neutral",
+            "iden": "i_113_36"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nIn this conversation, the speaker",
+            "actual": "frustrated",
+            "iden": "i_113_37"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nThe utterance is",
+            "actual": "angry",
+            "iden": "i_113_38"
+        },
+        {
+            "pred": "neutral\n###\n\n\n```python\nALLOWED_LABEL",
+            "actual": "neutral",
+            "iden": "i_113_40"
+        },
+        {
+            "pred": "frustrated\n###\n\n\n\nYou are a careful",
+            "actual": "angry",
+            "iden": "i_113_41"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n###\n\n\n\n###\n\n\nSpeaker:",
+            "actual": "frustrated",
+            "iden": "i_113_42"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\nSpeaker M is",
+            "actual": "angry",
+            "iden": "i_113_43"
+        },
+        {
+            "pred": "neutral\n\nREASONING\n- The utterance",
+            "actual": "angry",
+            "iden": "i_113_44"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\n\nSpeaker \"M",
+            "actual": "frustrated",
+            "iden": "i_113_45"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nBased on the conversation history",
+            "actual": "angry",
+            "iden": "i_113_46"
+        },
+        {
+            "pred": "excited\n- No, this is not excited",
+            "actual": "frustrated",
+            "iden": "i_113_47"
+        },
+        {
+            "pred": "sad\n\n###  F: What's the matter",
+            "actual": "frustrated",
+            "iden": "i_113_48"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance is",
+            "actual": "frustrated",
+            "iden": "i_113_49"
+        },
+        {
+            "pred": "angry\n###\n\n\nIn the given conversation,",
+            "actual": "frustrated",
+            "iden": "i_113_51"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "neutral",
+            "iden": "i_113_53"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker \"F",
+            "actual": "neutral",
+            "iden": "i_113_54"
+        },
+        {
+            "pred": "sad\n\n###\n\n\n\nPlease pick one label from the",
+            "actual": "neutral",
+            "iden": "i_113_56"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n- The utterance's",
+            "actual": "angry",
+            "iden": "i_113_58"
+        },
+        {
+            "pred": "neutral\n\nRationale:  Given the speaker's",
+            "actual": "frustrated",
+            "iden": "i_113_59"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker's utter",
+            "actual": "frustrated",
+            "iden": "i_113_61"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker's utterance",
+            "actual": "frustrated",
+            "iden": "i_113_62"
+        },
+        {
+            "pred": "neutral\n###  <--- END CONVERSATION",
+            "actual": "neutral",
+            "iden": "i_113_63"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTASK\nSpeaker: \"F",
+            "actual": "neutral",
+            "iden": "i_113_64"
+        },
+        {
+            "pred": "neutral\n###  ###  ###  ### ",
+            "actual": "neutral",
+            "iden": "i_113_65"
+        },
+        {
+            "pred": "neutral\n###\n\n\nCONTEXT\nFew-shot examples:\n",
+            "actual": "neutral",
+            "iden": "i_113_66"
+        },
+        {
+            "pred": "neutral\n###\n\n\nLet's try another one:\n",
+            "actual": "frustrated",
+            "iden": "i_113_67"
+        },
+        {
+            "pred": "frustrated\n\nExplanation: \nIn this case",
+            "actual": "sad",
+            "iden": "i_113_68"
+        },
+        {
+            "pred": "angry\n###\n\n\nThe final answer is:",
+            "actual": "angry",
+            "iden": "i_113_69"
+        },
+        {
+            "pred": "neutral\n>  Explanation:\nThe literal meaning of",
+            "actual": "angry",
+            "iden": "i_113_71"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's utterance",
+            "actual": "frustrated",
+            "iden": "i_113_72"
+        },
+        {
+            "pred": "angry\n\n###\n\n\n\nPlease describe the decision-making",
+            "actual": "angry",
+            "iden": "i_113_73"
+        },
+        {
+            "pred": "sad\n\nExplanation\nThe speaker (\"M\") says",
+            "actual": "angry",
+            "iden": "i_113_74"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\n\nGiven the conversation",
+            "actual": "angry",
+            "iden": "i_113_75"
+        },
+        {
+            "pred": "frustrated\n\n###\n\n\nPlease classify the emotion",
+            "actual": "angry",
+            "iden": "i_113_76"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nThe speaker M uses a",
+            "actual": "neutral",
+            "iden": "i_113_79"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker \"F",
+            "actual": "angry",
+            "iden": "i_113_80"
+        },
+        {
+            "pred": "neutral\n\nRationale:  The speaker M is",
+            "actual": "neutral",
+            "iden": "i_113_81"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nThe speaker's utter",
+            "actual": "angry",
+            "iden": "i_113_82"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker is expressing a desire",
+            "actual": "frustrated",
+            "iden": "i_113_83"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nBased on the decision policy",
+            "actual": "angry",
+            "iden": "i_113_84"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker says \"No,",
+            "actual": "frustrated",
+            "iden": "i_113_87"
+        },
+        {
+            "pred": "angry\n\n### ###\n\n###\nS: I",
+            "actual": "angry",
+            "iden": "i_114_0"
+        },
+        {
+            "pred": "angry\n\nExplanation: \nThe speaker uses an",
+            "actual": "neutral",
+            "iden": "i_114_1"
+        },
+        {
+            "pred": "sad\n\nExplanation: Based on the conversation history and",
+            "actual": "neutral",
+            "iden": "i_114_2"
+        },
+        {
+            "pred": "sad\n###\n\n\nTASK\n- Pick exactly ONE",
+            "actual": "angry",
+            "iden": "i_114_4"
+        },
+        {
+            "pred": "neutral\n###\n\n\n###\n\n\n###\n\n\n###\n\n\n",
+            "actual": "angry",
+            "iden": "i_114_6"
+        },
+        {
+            "pred": "Answer: \nneutral\n\nExplanation:\nThe speaker's",
+            "actual": "frustrated",
+            "iden": "i_114_7"
+        },
+        {
+            "pred": "angry\n###\n\n\n\n###\n\n\n###\n\n\n###",
+            "actual": "angry",
+            "iden": "i_114_9"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYour turn. Speaker: \"",
+            "actual": "neutral",
+            "iden": "i_114_10"
+        },
+        {
+            "pred": "sad\n\n### is the start of a new conversation",
+            "actual": "angry",
+            "iden": "i_114_11"
+        },
+        {
+            "pred": "neutral\n###\n\n\nDECISION RATIONALE\n",
+            "actual": "neutral",
+            "iden": "i_114_12"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nBased on the context,",
+            "actual": "angry",
+            "iden": "i_114_13"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe utterance's literal meaning",
+            "actual": "neutral",
+            "iden": "i_114_14"
+        },
+        {
+            "pred": "frustrated\n###\n\n\nLet's analyze the",
+            "actual": "neutral",
+            "iden": "i_114_15"
+        },
+        {
+            "pred": "neutral\n\nEXPLANATION\nThe speaker's tone",
+            "actual": "angry",
+            "iden": "i_114_17"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nGiven the conversation history and",
+            "actual": "angry",
+            "iden": "i_114_19"
+        },
+        {
+            "pred": "angry\n### \n\nLet's analyze the utter",
+            "actual": "angry",
+            "iden": "i_114_21"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker, M, is",
+            "actual": "frustrated",
+            "iden": "i_114_22"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "angry",
+            "iden": "i_114_23"
+        },
+        {
+            "pred": "frustrated\n\n###\n\n\nExplanation:\n\nBased on",
+            "actual": "frustrated",
+            "iden": "i_114_24"
+        },
+        {
+            "pred": "neutral\nneutral\nneutral\nangry\nang",
+            "actual": "angry",
+            "iden": "i_114_25"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker's utterance",
+            "actual": "frustrated",
+            "iden": "i_114_26"
+        },
+        {
+            "pred": "sad\n\nExplanation:\n1. The speaker says \"",
+            "actual": "angry",
+            "iden": "i_114_27"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's utterance",
+            "actual": "angry",
+            "iden": "i_114_28"
+        },
+        {
+            "pred": "neutral\n```python\n# Define the allowed labels",
+            "actual": "angry",
+            "iden": "i_114_29"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nBased on the context",
+            "actual": "frustrated",
+            "iden": "i_114_30"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nThe utterance is",
+            "actual": "angry",
+            "iden": "i_114_31"
+        },
+        {
+            "pred": "neutral\n```python\ndef classify_emotion(",
+            "actual": "frustrated",
+            "iden": "i_114_32"
+        },
+        {
+            "pred": "angry\n\nExplanation: The speaker (M)",
+            "actual": "frustrated",
+            "iden": "i_114_34"
+        },
+        {
+            "pred": "frustrated\n\n### \nF: Oh,",
+            "actual": "angry",
+            "iden": "i_114_35"
+        },
+        {
+            "pred": "angry\n\nExplanation:\n- The speaker's tone",
+            "actual": "frustrated",
+            "iden": "i_114_36"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nExplanation:\nThe speaker's utter",
+            "actual": "sad",
+            "iden": "i_114_39"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThis utterance indicates a",
+            "actual": "angry",
+            "iden": "i_114_40"
+        },
+        {
+            "pred": "neutral\n###\n\n\n###\n\n\nM: So,",
+            "actual": "joyful",
+            "iden": "i_115_27"
+        },
+        {
+            "pred": "neutral\n\nNote: The speaker is expressing a mix",
+            "actual": "joyful",
+            "iden": "i_115_29"
+        },
+        {
+            "pred": "frustrated\n###\n\n\n\nThe final answer is",
+            "actual": "joyful",
+            "iden": "i_115_32"
+        },
+        {
+            "pred": "neutral\n\nNote: The speaker says \"going from",
+            "actual": "sad",
+            "iden": "i_115_41"
+        },
+        {
+            "pred": "excited\n```python\nimport re\n\n#",
+            "actual": "sad",
+            "iden": "i_115_43"
+        },
+        {
+            "pred": "neutral\n###\n\n\nIn this task, the careful",
+            "actual": "sad",
+            "iden": "i_115_45"
+        },
+        {
+            "pred": "angry\n\n### 1. \"I kissed",
+            "actual": "sad",
+            "iden": "i_115_47"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe utterance \"How many",
+            "actual": "sad",
+            "iden": "i_115_48"
+        },
+        {
+            "pred": "sad\n\nReasoning:\nThe utterance \"Just",
+            "actual": "sad",
+            "iden": "i_115_49"
+        },
+        {
+            "pred": "excited\n###\n\n\nANSWER: \nneutral",
+            "actual": "sad",
+            "iden": "i_115_50"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nThe speaker's literal",
+            "actual": "sad",
+            "iden": "i_115_51"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nThe speaker uses the phrase",
+            "actual": "sad",
+            "iden": "i_115_52"
+        },
+        {
+            "pred": "neutral\n\nEXPLANATION\nBased on the conversation",
+            "actual": "sad",
+            "iden": "i_115_54"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker says \"You understand",
+            "actual": "sad",
+            "iden": "i_115_55"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker is describing a lack",
+            "actual": "sad",
+            "iden": "i_115_56"
+        },
+        {
+            "pred": "sad\n###\n\n\nPlease use the utterance and",
+            "actual": "sad",
+            "iden": "i_115_57"
+        },
+        {
+            "pred": "sad\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "sad",
+            "iden": "i_115_58"
+        },
+        {
+            "pred": "neutral\n  (Explanation: The speaker's tone",
+            "actual": "sad",
+            "iden": "i_115_59"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nBased on the conversation",
+            "actual": "joyful",
+            "iden": "i_115_64"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker, Annie,",
+            "actual": "joyful",
+            "iden": "i_115_65"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker says they wanted to",
+            "actual": "excited",
+            "iden": "i_116_1"
+        },
+        {
+            "pred": "neutral\n###\n\n\nCONTEXT\nFew-shot examples:\n",
+            "actual": "neutral",
+            "iden": "i_116_2"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\n\nYour answer is: neutral\n\n",
+            "actual": "excited",
+            "iden": "i_116_3"
+        },
+        {
+            "pred": "neutral\n<|reserved_special_token_0|",
+            "actual": "excited",
+            "iden": "i_116_4"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nAudio descriptors (low",
+            "actual": "angry",
+            "iden": "i_116_7"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nIn this scenario, speaker \"",
+            "actual": "neutral",
+            "iden": "i_116_8"
+        },
+        {
+            "pred": "neutral\n---\n\nExplanation:\nGiven the conversation history and",
+            "actual": "angry",
+            "iden": "i_116_9"
+        },
+        {
+            "pred": "excited\n###\n\n\n\nThe final answer is:",
+            "actual": "frustrated",
+            "iden": "i_116_10"
+        },
+        {
+            "pred": "neutral\n\n\nExplanation:\nGiven the utterance and audio",
+            "actual": "angry",
+            "iden": "i_116_11"
+        },
+        {
+            "pred": "<neutral>  # This is the correct answer",
+            "actual": "excited",
+            "iden": "i_116_13"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe literal meaning of the utter",
+            "actual": "angry",
+            "iden": "i_116_14"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe speaker is discussing a potentially",
+            "actual": "neutral",
+            "iden": "i_116_15"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker asks a question",
+            "actual": "neutral",
+            "iden": "i_116_19"
+        },
+        {
+            "pred": "sad\n###\n\n\nThe final answer is $\\boxed",
+            "actual": "angry",
+            "iden": "i_116_20"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nYou are a careful emotion",
+            "actual": "frustrated",
+            "iden": "i_116_21"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nI've chosen the label",
+            "actual": "angry",
+            "iden": "i_116_22"
+        },
+        {
+            "pred": "neutral\n\nRationale\nThe speaker's tone,",
+            "actual": "neutral",
+            "iden": "i_116_23"
+        },
+        {
+            "pred": "excited\nf\nsad\nneutral\nang",
+            "actual": "frustrated",
+            "iden": "i_116_24"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "neutral",
+            "iden": "i_116_25"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nNote: As a careful emotion",
+            "actual": "angry",
+            "iden": "i_116_26"
+        },
+        {
+            "pred": "frustrated\n\n###\n\n\nYou are a careful",
+            "actual": "frustrated",
+            "iden": "i_116_27"
+        },
+        {
+            "pred": "neutral\n\n### (end of conversation) ###\n\n",
+            "actual": "frustrated",
+            "iden": "i_116_28"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nBased on the conversation history,",
+            "actual": "angry",
+            "iden": "i_116_30"
+        },
+        {
+            "pred": "<excited>  # Answer with the label",
+            "actual": "excited",
+            "iden": "i_116_31"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's utterance,",
+            "actual": "angry",
+            "iden": "i_116_32"
+        },
+        {
+            "pred": "angry\n\nExplanation\n- M is attempting to",
+            "actual": "frustrated",
+            "iden": "i_116_33"
+        },
+        {
+            "pred": "neutral\n**JUSTIFY**\nThe utterance is",
+            "actual": "excited",
+            "iden": "i_116_34"
+        },
+        {
+            "pred": "excited\n\nExplanation: The speaker is using hyper",
+            "actual": "excited",
+            "iden": "i_116_35"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nThe final answer is neutral.",
+            "actual": "neutral",
+            "iden": "i_116_36"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\nThe speaker is expressing",
+            "actual": "frustrated",
+            "iden": "i_116_37"
+        },
+        {
+            "pred": "neutral\n  (M's tone is somewhat enthusiastic",
+            "actual": "excited",
+            "iden": "i_116_38"
+        },
+        {
+            "pred": "excited\nExplanation: The speaker is using enthusiastic",
+            "actual": "excited",
+            "iden": "i_116_39"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation\nThe speaker (\"F",
+            "actual": "frustrated",
+            "iden": "i_116_40"
+        },
+        {
+            "pred": "neutral\n\n---\n\n### \nF: I just don",
+            "actual": "angry",
+            "iden": "i_116_42"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker F appears to be",
+            "actual": "angry",
+            "iden": "i_116_44"
+        },
+        {
+            "pred": "neutral\n\nRationale: The utterance's literal",
+            "actual": "frustrated",
+            "iden": "i_116_46"
+        },
+        {
+            "pred": "neutral\n\nReasoning\nThe speaker's utterance",
+            "actual": "excited",
+            "iden": "i_116_48"
+        },
+        {
+            "pred": "excited\n\nExplanation:\nThe speaker is using vivid",
+            "actual": "excited",
+            "iden": "i_116_49"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's utterance and",
+            "actual": "excited",
+            "iden": "i_116_50"
+        },
+        {
+            "pred": "neutral\n\nREASONING\nI choose \"neutral",
+            "actual": "excited",
+            "iden": "i_116_51"
+        },
+        {
+            "pred": "<excited>  ##  <excited",
+            "actual": "excited",
+            "iden": "i_116_52"
+        },
+        {
+            "pred": "neutral\n###  (answer below)  ###",
+            "actual": "frustrated",
+            "iden": "i_116_53"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "excited",
+            "iden": "i_116_54"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_116_55"
+        },
+        {
+            "pred": "neutral\n###\n\n\nCONTEXT\nFew-shot examples:\n",
+            "actual": "neutral",
+            "iden": "i_117_0"
+        },
+        {
+            "pred": "neutral\n###  M: Well so what'd",
+            "actual": "neutral",
+            "iden": "i_117_1"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- Speaker M's tone was",
+            "actual": "neutral",
+            "iden": "i_117_3"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\n- The utterance \"",
+            "actual": "frustrated",
+            "iden": "i_117_5"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nThe speaker M asks Carla",
+            "actual": "frustrated",
+            "iden": "i_117_11"
+        },
+        {
+            "pred": "angry\n\nOUTPUT (again)\nangry\n\n",
+            "actual": "angry",
+            "iden": "i_117_12"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker's utterance",
+            "actual": "angry",
+            "iden": "i_117_13"
+        },
+        {
+            "pred": "neutral\n###  (no)  ###\n\n",
+            "actual": "angry",
+            "iden": "i_117_14"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe utterance is an objective",
+            "actual": "angry",
+            "iden": "i_117_15"
+        },
+        {
+            "pred": "frustrated\n\nExplanation:\nThe speaker (F",
+            "actual": "angry",
+            "iden": "i_117_18"
+        },
+        {
+            "pred": "frustrated\n###  ###  ### ",
+            "actual": "frustrated",
+            "iden": "i_117_21"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nSpeaker \"M\" uses",
+            "actual": "frustrated",
+            "iden": "i_117_22"
+        },
+        {
+            "pred": "sad\n\n###\n\n\n\nContext\nWe are talking about",
+            "actual": "frustrated",
+            "iden": "i_117_25"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker's tone is",
+            "actual": "frustrated",
+            "iden": "i_117_26"
+        },
+        {
+            "pred": "frustrated\n###\n\n\n\nThe final answer is",
+            "actual": "angry",
+            "iden": "i_117_27"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nThe speaker's utterance",
+            "actual": "frustrated",
+            "iden": "i_117_28"
+        },
+        {
+            "pred": "frustrated\n___\n___\n___\n",
+            "actual": "frustrated",
+            "iden": "i_117_30"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's utterance is",
+            "actual": "frustrated",
+            "iden": "i_117_31"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker (M) says",
+            "actual": "frustrated",
+            "iden": "i_117_32"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation:\n\nThe speaker, \"",
+            "actual": "frustrated",
+            "iden": "i_117_33"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER:\nneutral\n###",
+            "actual": "frustrated",
+            "iden": "i_117_35"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker F's utterance",
+            "actual": "sad",
+            "iden": "i_117_36"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's current utterance",
+            "actual": "neutral",
+            "iden": "i_117_38"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nThe speaker is remembering a past",
+            "actual": "sad",
+            "iden": "i_117_39"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n# Answer: neutral\n#",
+            "actual": "neutral",
+            "iden": "i_117_40"
+        },
+        {
+            "pred": "sad\n\n# Explanation:\nBased on the speaker's",
+            "actual": "sad",
+            "iden": "i_117_41"
+        },
+        {
+            "pred": "neutral\n### \n\n\n\n\n\nThis is an example of",
+            "actual": "sad",
+            "iden": "i_117_43"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "sad",
+            "iden": "i_117_45"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n  # This function will return",
+            "actual": "frustrated",
+            "iden": "i_117_46"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nBased on the context and",
+            "actual": "frustrated",
+            "iden": "i_117_47"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER:\nneutral\n\nExplanation",
+            "actual": "frustrated",
+            "iden": "i_117_48"
+        },
+        {
+            "pred": "neutral\n###\n\n\nANSWER: neutral\n\nYou",
+            "actual": "frustrated",
+            "iden": "i_117_49"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation\nThe speaker,",
+            "actual": "frustrated",
+            "iden": "i_117_50"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nExplanation:\nIn this conversation,",
+            "actual": "frustrated",
+            "iden": "i_117_51"
+        },
+        {
+            "pred": "neutral\n###  ###  ###  ### ",
+            "actual": "frustrated",
+            "iden": "i_117_52"
+        },
+        {
+            "pred": "neutral\n\nRationale\nThe speaker says \"No",
+            "actual": "angry",
+            "iden": "i_117_53"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's utterance",
+            "actual": "angry",
+            "iden": "i_117_55"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nIn this conversation, the",
+            "actual": "angry",
+            "iden": "i_117_56"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThis is a more complex",
+            "actual": "angry",
+            "iden": "i_117_58"
+        },
+        {
+            "pred": "angry\n\n(No further output or explanation is",
+            "actual": "angry",
+            "iden": "i_117_59"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker, M, says",
+            "actual": "frustrated",
+            "iden": "i_117_60"
+        },
+        {
+            "pred": "angry\n###  The speaker is clearly frustrated",
+            "actual": "angry",
+            "iden": "i_117_61"
+        },
+        {
+            "pred": "excited\n###\n\n\nYour response: excited\n",
+            "actual": "frustrated",
+            "iden": "i_117_62"
+        },
+        {
+            "pred": "sad\n\n\nExplanation\n- The speaker's utterance",
+            "actual": "angry",
+            "iden": "i_117_63"
+        },
+        {
+            "pred": "angry\n```python\ndef classify_emotion",
+            "actual": "angry",
+            "iden": "i_117_64"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nGiven the speaker's",
+            "actual": "frustrated",
+            "iden": "i_117_66"
+        },
+        {
+            "pred": "sad\n\n\n---\n\nTASK\n- Pick exactly ONE label",
+            "actual": "frustrated",
+            "iden": "i_117_67"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker's utterance \"",
+            "actual": "sad",
+            "iden": "i_117_69"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "sad",
+            "iden": "i_117_70"
+        },
+        {
+            "pred": "angry\n\nThe audio cues (medium speech rate",
+            "actual": "joyful",
+            "iden": "i_117_74"
+        },
+        {
+            "pred": "neutral\n####\n\nExplanation: \nThe utterance",
+            "actual": "joyful",
+            "iden": "i_117_75"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nThis problem is a classification problem",
+            "actual": "joyful",
+            "iden": "i_117_76"
+        },
+        {
+            "pred": "sad\n\n**Explanation**: \nThe speaker, F",
+            "actual": "joyful",
+            "iden": "i_117_77"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker's tone is calm",
+            "actual": "joyful",
+            "iden": "i_117_78"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nExplanation:\n\nThe speaker, M",
+            "actual": "neutral",
+            "iden": "i_118_6"
+        },
+        {
+            "pred": "neutral\n\nExplanation: The speaker is expressing a somewhat",
+            "actual": "excited",
+            "iden": "i_118_8"
+        },
+        {
+            "pred": "neutral\n\nRationale\nGiven the utterance,",
+            "actual": "excited",
+            "iden": "i_118_11"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's utterance",
+            "actual": "excited",
+            "iden": "i_118_12"
+        },
+        {
+            "pred": " \nANSWER: \nexcited\n  -",
+            "actual": "excited",
+            "iden": "i_118_13"
+        },
+        {
+            "pred": "```python\ndef classify_emotion(utterance",
+            "actual": "excited",
+            "iden": "i_118_14"
+        },
+        {
+            "pred": "angry\n\nReasoning:\nThe speaker's tone",
+            "actual": "excited",
+            "iden": "i_118_15"
+        },
+        {
+            "pred": "angry\n\n--- \n\nExplanation:\nThe utterance",
+            "actual": "excited",
+            "iden": "i_118_17"
+        },
+        {
+            "pred": "<joyful> \n\nRationale: Given the",
+            "actual": "excited",
+            "iden": "i_118_19"
+        },
+        {
+            "pred": "sad\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "neutral",
+            "iden": "i_118_20"
+        },
+        {
+            "pred": "excited\n```python\n# Define the allowed",
+            "actual": "neutral",
+            "iden": "i_118_24"
+        },
+        {
+            "pred": "neutral\n\nRationale: Based on the conversation history",
+            "actual": "excited",
+            "iden": "i_118_25"
+        },
+        {
+            "pred": "excited\n###\n\n\nYou are a careful emotion",
+            "actual": "angry",
+            "iden": "i_118_26"
+        },
+        {
+            "pred": "neutral\n\nRationale\nBased on the conversation history",
+            "actual": "neutral",
+            "iden": "i_118_27"
+        },
+        {
+            "pred": "neutral\n\nReasoning:\nThe speaker's utterance",
+            "actual": "excited",
+            "iden": "i_118_29"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe utterance's literal",
+            "actual": "excited",
+            "iden": "i_118_31"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe speaker's utterance is",
+            "actual": "sad",
+            "iden": "i_118_32"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker is asking a question",
+            "actual": "excited",
+            "iden": "i_118_35"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker \"F\" uses",
+            "actual": "excited",
+            "iden": "i_118_37"
+        },
+        {
+            "pred": "excited\n###\n\n\n\nHere's another one:\n\n",
+            "actual": "excited",
+            "iden": "i_118_41"
+        },
+        {
+            "pred": "sad\n###\n\n\nExplanation:\nThe speaker's utter",
+            "actual": "excited",
+            "iden": "i_118_44"
+        },
+        {
+            "pred": "sad\n###\n\n\nExplanation:\n\nThe speaker \"F",
+            "actual": "excited",
+            "iden": "i_118_46"
+        },
+        {
+            "pred": "neutral\n\nRationale:\nThe speaker is recalling a",
+            "actual": "excited",
+            "iden": "i_118_48"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nThe speaker uses irony",
+            "actual": "angry",
+            "iden": "i_118_49"
+        },
+        {
+            "pred": "neutral\n\nJustification:\n- Utterance's",
+            "actual": "excited",
+            "iden": "i_118_50"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\n\nLet's try another one.\n",
+            "actual": "excited",
+            "iden": "i_118_52"
+        },
+        {
+            "pred": "sad\n\nExplanation\nThe speaker (\"F\") is",
+            "actual": "excited",
+            "iden": "i_118_54"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\nGiven the conversation history,",
+            "actual": "neutral",
+            "iden": "i_118_55"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker says \"rou",
+            "actual": "excited",
+            "iden": "i_118_56"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the given context and",
+            "actual": "excited",
+            "iden": "i_118_57"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "excited",
+            "iden": "i_118_59"
+        },
+        {
+            "pred": "excited\n###  END  ###\n\n\n\"\"\"\n",
+            "actual": "excited",
+            "iden": "i_118_61"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker reflects on the",
+            "actual": "excited",
+            "iden": "i_118_63"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker (\"M\") says",
+            "actual": "neutral",
+            "iden": "i_118_64"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nBased on the given",
+            "actual": "angry",
+            "iden": "i_119_1"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker uses a mitigating",
+            "actual": "neutral",
+            "iden": "i_119_2"
+        },
+        {
+            "pred": "sad\n###\n\n\nTASK\n- Pick exactly ONE",
+            "actual": "joyful",
+            "iden": "i_119_3"
+        },
+        {
+            "pred": "neutral\n\nRationale\nThe speaker's tone is",
+            "actual": "joyful",
+            "iden": "i_119_5"
+        },
+        {
+            "pred": "excited\n###\n\n\nExplanation:\nThe classifier considers",
+            "actual": "joyful",
+            "iden": "i_119_7"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe utterance is a",
+            "actual": "frustrated",
+            "iden": "i_119_8"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker's utterance is",
+            "actual": "frustrated",
+            "iden": "i_119_10"
+        },
+        {
+            "pred": "sad\n###\n\n\nExplanation:\nThe speaker's utter",
+            "actual": "excited",
+            "iden": "i_119_13"
+        },
+        {
+            "pred": "angry\n###\n\n\nYou are a careful emotion",
+            "actual": "frustrated",
+            "iden": "i_119_14"
+        },
+        {
+            "pred": "angry\n\nRATIONALE\nGiven the conversation history",
+            "actual": "angry",
+            "iden": "i_119_16"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\n- The literal meaning of the",
+            "actual": "joyful",
+            "iden": "i_119_17"
+        },
+        {
+            "pred": "sad\n\nExplanation:\nThe speaker \"M\" is",
+            "actual": "neutral",
+            "iden": "i_119_18"
+        },
+        {
+            "pred": "neutral\n###\n\n\n---\n\nTASK\n- Pick exactly",
+            "actual": "neutral",
+            "iden": "i_119_19"
+        },
+        {
+            "pred": "angry\n###\n\n\nThe final answer is:",
+            "actual": "angry",
+            "iden": "i_119_20"
+        },
+        {
+            "pred": "angry\n\n### is used to separate conversation turns",
+            "actual": "angry",
+            "iden": "i_119_21"
+        },
+        {
+            "pred": "angry\n\nExplanation\nGiven the conversation history,",
+            "actual": "angry",
+            "iden": "i_119_22"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nYou are a careful emotion",
+            "actual": "angry",
+            "iden": "i_119_24"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker's tone and language",
+            "actual": "frustrated",
+            "iden": "i_119_25"
+        },
+        {
+            "pred": "neutral\n\nExplanation: \nGiven the utterance's",
+            "actual": "angry",
+            "iden": "i_119_26"
+        },
+        {
+            "pred": "excited\n```python\n# Define the allowed",
+            "actual": "frustrated",
+            "iden": "i_119_27"
+        },
+        {
+            "pred": "neutral\n\nREASONING\n- The speaker's",
+            "actual": "angry",
+            "iden": "i_119_28"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTASK\nSpeaker: \"M",
+            "actual": "angry",
+            "iden": "i_119_30"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker M's tone",
+            "actual": "frustrated",
+            "iden": "i_119_31"
+        },
+        {
+            "pred": "neutral\n###\n\n\nThe final answer is: neutral",
+            "actual": "frustrated",
+            "iden": "i_119_32"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nLet's analyze the utterance",
+            "actual": "frustrated",
+            "iden": "i_119_33"
+        },
+        {
+            "pred": "neutral\n###\n\n\nTASK\n- Pick exactly ONE",
+            "actual": "frustrated",
+            "iden": "i_119_34"
+        },
+        {
+            "pred": "neutral\n```python\ndef classify_emotion(",
+            "actual": "frustrated",
+            "iden": "i_119_35"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nThe speaker, F, is",
+            "actual": "angry",
+            "iden": "i_119_36"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\nYou are a careful emotion classifier",
+            "actual": "frustrated",
+            "iden": "i_119_37"
+        },
+        {
+            "pred": "angry\n\nExplanation\n- Speaker \"F\"",
+            "actual": "frustrated",
+            "iden": "i_119_38"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker M utters",
+            "actual": "angry",
+            "iden": "i_119_39"
+        },
+        {
+            "pred": "neutral\n\nExplanation:\nBased on the provided context and",
+            "actual": "angry",
+            "iden": "i_119_40"
+        },
+        {
+            "pred": "neutral\n\nExplanation\nThe speaker \"M\" ut",
+            "actual": "angry",
+            "iden": "i_119_41"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker (\"M\")",
+            "actual": "angry",
+            "iden": "i_119_42"
+        },
+        {
+            "pred": "neutral\n```python\ndef classify_emotion(",
+            "actual": "frustrated",
+            "iden": "i_119_43"
+        },
+        {
+            "pred": "sad\n###\n\n\n\nWhat's the emotion of the",
+            "actual": "frustrated",
+            "iden": "i_119_44"
+        },
+        {
+            "pred": "neutral\n###\n\n\nExplanation\nThe speaker's utter",
+            "actual": "angry",
+            "iden": "i_119_46"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker's tone and",
+            "actual": "angry",
+            "iden": "i_119_47"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nLet's start the conversation",
+            "actual": "angry",
+            "iden": "i_119_48"
+        },
+        {
+            "pred": "angry\n###\n\n\nExplanation:\nThe speaker,",
+            "actual": "angry",
+            "iden": "i_119_49"
+        },
+        {
+            "pred": "neutral\n\nRationale: \nGiven the conversation context",
+            "actual": "neutral",
+            "iden": "i_119_50"
+        },
+        {
+            "pred": "angry\n\nExplanation:\n- Utterance:",
+            "actual": "neutral",
+            "iden": "i_119_51"
+        },
+        {
+            "pred": "angry\n\n### is used to separate conversation turns",
+            "actual": "angry",
+            "iden": "i_119_52"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nThe final answer is:",
+            "actual": "frustrated",
+            "iden": "i_119_53"
+        },
+        {
+            "pred": "neutral\n\nRationale:  The speaker (\"M",
+            "actual": "neutral",
+            "iden": "i_119_54"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nTASK\nSpeaker: \"",
+            "actual": "angry",
+            "iden": "i_119_55"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\n- Utterance is",
+            "actual": "angry",
+            "iden": "i_119_56"
+        },
+        {
+            "pred": "angry\n###  The woman's job is",
+            "actual": "angry",
+            "iden": "i_119_57"
+        },
+        {
+            "pred": "angry\n###  ###  ###  ###",
+            "actual": "frustrated",
+            "iden": "i_119_58"
+        },
+        {
+            "pred": "angry\n###\n\n\nYou are a careful emotion",
+            "actual": "angry",
+            "iden": "i_119_59"
+        },
+        {
+            "pred": "neutral\n(You must use the decision policy to",
+            "actual": "angry",
+            "iden": "i_119_60"
+        },
+        {
+            "pred": "neutral\n###  ###  ###  ### ",
+            "actual": "angry",
+            "iden": "i_119_62"
+        },
+        {
+            "pred": "angry\n\n### ###\n\nNote: the label",
+            "actual": "angry",
+            "iden": "i_119_63"
+        },
+        {
+            "pred": "angry\n\n###  (end of conversation)\n\n",
+            "actual": "angry",
+            "iden": "i_119_64"
+        },
+        {
+            "pred": "sad\n```python\n# Define the emotion labels",
+            "actual": "angry",
+            "iden": "i_119_65"
+        },
+        {
+            "pred": "sad\n###\n\n\nThe final answer is: sad",
+            "actual": "angry",
+            "iden": "i_119_66"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nThe correct label for the",
+            "actual": "angry",
+            "iden": "i_119_67"
+        },
+        {
+            "pred": "angry\n\nRATIONALE\nThe speaker (\"M",
+            "actual": "angry",
+            "iden": "i_119_68"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nThe speaker's words are",
+            "actual": "angry",
+            "iden": "i_119_69"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\n- The utterance's",
+            "actual": "frustrated",
+            "iden": "i_119_70"
+        },
+        {
+            "pred": "frustrated\n###\n\n\n---\n\nTASK\n-",
+            "actual": "angry",
+            "iden": "i_119_71"
+        },
+        {
+            "pred": "neutral\n\nExplanation\n- Speaker's tone in the",
+            "actual": "angry",
+            "iden": "i_119_72"
+        },
+        {
+            "pred": "angry\n###\n\n\n\nNote: In this task",
+            "actual": "angry",
+            "iden": "i_119_73"
+        },
+        {
+            "pred": "neutral\n\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "angry",
+            "iden": "i_119_75"
+        },
+        {
+            "pred": "neutral\n\nReasoning: Based on the conversation history",
+            "actual": "angry",
+            "iden": "i_119_76"
+        },
+        {
+            "pred": "neutral\n---\n\nExplanation: \nThe speaker, M",
+            "actual": "angry",
+            "iden": "i_119_77"
+        },
+        {
+            "pred": "neutral\n###\n\n\n---\n\nTASK\n- Pick exactly",
+            "actual": "angry",
+            "iden": "i_119_78"
+        },
+        {
+            "pred": "neutral\n###\n\n\nYou are a careful emotion classifier",
+            "actual": "angry",
+            "iden": "i_119_80"
+        },
+        {
+            "pred": "neutral\n\nRATIONALE\n- The utterance is",
+            "actual": "angry",
+            "iden": "i_119_81"
+        },
+        {
+            "pred": "excited\n###\n\n\nANSWER: \nexc",
+            "actual": "angry",
+            "iden": "i_119_84"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nCONTEXT\nConversation (del",
+            "actual": "angry",
+            "iden": "i_119_86"
+        },
+        {
+            "pred": "angry\n\n###\n\n\n\nNote: For this task",
+            "actual": "angry",
+            "iden": "i_119_87"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nOUTPUT\nangry\n\n\n",
+            "actual": "angry",
+            "iden": "i_119_88"
+        },
+        {
+            "pred": "angry\n###\n\n\n```python\ndef emotion",
+            "actual": "angry",
+            "iden": "i_119_89"
+        },
+        {
+            "pred": "angry\n\n### \nF: That's not",
+            "actual": "angry",
+            "iden": "i_119_90"
+        },
+        {
+            "pred": "neutral\n\nRationale: The speaker is asking the",
+            "actual": "neutral",
+            "iden": "i_119_91"
+        },
+        {
+            "pred": "neutral\n###\n\n\n\n---\nTASK\n- Pick exactly",
+            "actual": "angry",
+            "iden": "i_119_92"
+        },
+        {
+            "pred": "angry\n\nExplanation\n- The utterance expresses",
+            "actual": "angry",
+            "iden": "i_119_93"
+        },
+        {
+            "pred": "angry\n\nExplanation:\n- The speaker's literal",
+            "actual": "angry",
+            "iden": "i_119_94"
+        },
+        {
+            "pred": "angry\n###\n\n\n\n###\n\n\n\n###\n\n\n\n###",
+            "actual": "angry",
+            "iden": "i_119_95"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker uses strong derog",
+            "actual": "angry",
+            "iden": "i_119_96"
+        },
+        {
+            "pred": "angry\n\n### (continued)\nM: I",
+            "actual": "angry",
+            "iden": "i_119_97"
+        },
+        {
+            "pred": "neutral\n\nRationale:\n1. Utterance",
+            "actual": "angry",
+            "iden": "i_119_98"
+        },
+        {
+            "pred": "angry\n\n### END ###\n\nHere is the",
+            "actual": "angry",
+            "iden": "i_119_99"
+        },
+        {
+            "pred": "angry\n\n###  F: Oh, yes",
+            "actual": "angry",
+            "iden": "i_119_100"
+        },
+        {
+            "pred": "angry\n\n###  No you're not.",
+            "actual": "angry",
+            "iden": "i_119_101"
+        },
+        {
+            "pred": "angry\n###\n\n\n\n###\n\n\n\n###\n\n\n\n###",
+            "actual": "angry",
+            "iden": "i_119_102"
+        },
+        {
+            "pred": "angry\n\nExplanation: The speaker's utterance",
+            "actual": "angry",
+            "iden": "i_119_103"
+        },
+        {
+            "pred": "angry\n```python\nALLOWED_LABELS",
+            "actual": "angry",
+            "iden": "i_119_104"
+        },
+        {
+            "pred": "frustrated\n###  I apologize, but",
+            "actual": "angry",
+            "iden": "i_119_105"
+        },
+        {
+            "pred": "angry\n\nExplanation:\nBased on the conversation history",
+            "actual": "angry",
+            "iden": "i_119_106"
+        },
+        {
+            "pred": "angry\n\n###\n\n\nTASK\n- Pick exactly",
+            "actual": "angry",
+            "iden": "i_119_107"
+        },
+        {
+            "pred": "angry\n\nExplanation\nThe speaker's tone and",
+            "actual": "angry",
+            "iden": "i_119_108"
+        },
+        {
+            "pred": "angry\n\n---\n\n### NEXT CONVERSATION ###",
+            "actual": "angry",
+            "iden": "i_119_109"
+        }
+    ]
+}
