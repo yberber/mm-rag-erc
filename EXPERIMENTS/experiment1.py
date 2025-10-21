@@ -7,14 +7,15 @@ config = {
     "top_n": 1,
     "max_m": 1,
     "use_detailed_example": "False",
-    "limit": None,
-    "load_model_via": "hf",
+    "limit": 50,
+    "model_id": 1,
     "split": "dev",
     "save": True,
-    "experiment_id": 1
+    "prompt_type": "default",
+    "experiment_id": 2
 }
 
-datasets = ["iemocap"]
+datasets = ["iemocap", "meld"]
 prompt_types = ["default", "gemini", "claude", "gpt5"]
 
 configs = []

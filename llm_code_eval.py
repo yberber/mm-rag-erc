@@ -18,11 +18,10 @@ from utils import (
     get_mapped_emotion_set,
     extract_emotion_from_llm_output,
     dump_json_test_result,
-    load_json, str2bool
-
+    load_json, str2bool,
+    check_path_exist_from_prefix
 )
-from prompts import (EMOTION_RECOGNITION_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT, CLAUDE_EMOTION_RECOGNITION_PROMPT
-, GPT5_EMOTION_RECOGNITION_PROMPT)
+from prompts import *
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -77,11 +76,11 @@ def parse_arguments():
         help="Maximum number of samples to test (default: None, tests all)"
     )
     parser.add_argument(
-        "--load_model_via",
-        type=str,
-        default="ollama",
-        choices=["ollama", "hf"],
-        help="Method to load the model (default: ollama)"
+        "--model_id",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3],
+        help="model id determines which model to llm model to use. 0 for llama3.1-8b via ollama, 1 for llama3.1-8b via hf, 2 for gemini-2.5-flash via vertexai, 3 for gemini-2.5-pro via vertexai. (Default 1)"
     )
     parser.add_argument(
         "--split",
@@ -113,16 +112,16 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-def get_prompt_template(prompt_type):
+def get_prompt_template(prompt_type, add_example):
     match prompt_type:
         case "default":
-            return EMOTION_RECOGNITION_PROMPT
+            return EMOTION_RECOGNITION_PROMPT if add_example else EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
         case "gemini":
-            return GEMINI_EMOTION_RECOGNITION_PROMPT
+            return GEMINI_EMOTION_RECOGNITION_PROMPT if add_example else GEMINI_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
         case "claude":
-            return CLAUDE_EMOTION_RECOGNITION_PROMPT
+            return CLAUDE_EMOTION_RECOGNITION_PROMPT if add_example else CLAUDE_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
         case "gpt5":
-            return GPT5_EMOTION_RECOGNITION_PROMPT
+            return GPT5_EMOTION_RECOGNITION_PROMPT if add_example else GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
         case _:
             raise ValueError(f"Unknown prompt type: {prompt_type}")
 
@@ -142,8 +141,17 @@ def is_prediction_correct(prediction, expected_output, emotion_set):
     return extract_emotion_from_llm_output(prediction, emotion_set) == expected_output
 
 
+def get_extracted_emotion(prediction, emotion_set, assign_to_invalid_emotion=None):
+    extracted = extract_emotion_from_llm_output(prediction, emotion_set)
+    if assign_to_invalid_emotion is not None:
+        if extracted not in emotion_set:
+            extracted = assign_to_invalid_emotion
+    return extracted
+
+
+
 @timing
-def run_tests(chain, test_data, dataset_name, emotion_set=None, limit=None, verbose=False):
+def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=None, verbose=False):
     """
     Run emotion recognition tests on the provided dataset.
 
@@ -182,6 +190,10 @@ def run_tests(chain, test_data, dataset_name, emotion_set=None, limit=None, verb
         target = data["target"]
         identifier = data["idx"]
 
+        # input_variables = ["demonstrations", "history", "speaker_id", "utterance", "audio_features",
+                           # "candidate_emotions"],
+
+        inp["history"] = "\n".join(inp["history"].split("\n")[-(max_k+1):])
         prediction = chain.invoke({
             **inp,
             "candidate_emotions": emotion_set_text
@@ -191,12 +203,12 @@ def run_tests(chain, test_data, dataset_name, emotion_set=None, limit=None, verb
         actuals.append(target)
         identifiers.append(identifier)
 
-        prediction_count += 1
-        correct_count += is_prediction_correct(prediction, target, emotion_set)
+        extracted_prediction = get_extracted_emotion(prediction, emotion_set, assign_to_invalid_emotion="neutral")
 
-        extracted_prediction = extract_emotion_from_llm_output(prediction, emotion_set)
-        if extracted_prediction in ["MultipleValidEmotionsFound", "NoValidEmotionFound"]:
-            extracted_prediction = "neutral"
+
+        prediction_count += 1
+        correct_count += int(target == extracted_prediction)
+
 
         extracted_predictions.append(extracted_prediction)
 
@@ -220,33 +232,37 @@ def run_tests(chain, test_data, dataset_name, emotion_set=None, limit=None, verb
     return predictions, actuals, identifiers, stats
 
 
-def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example,):
+def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, use_default_k=None):
+    if use_default_k is not None:
+        if 0 <= max_k <= use_default_k:
+            max_k = 20
+        else:
+            raise Exception("max_k must be between 1 and 20")
     demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
     return f"{dataset.upper()}/k{max_k}_{demonstration_id}"
 
 def load_eval_data(dataset, max_k, example_type, top_n, max_m, use_detailed_example, split):
     """Load test data from the processed dataset directory."""
-    data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example)
+    data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, use_default_k=20)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
     eval_data_path = os.path.join(processed_data_path, f"{split.lower()}.json")
     eval_data = load_json(relative_path_from_project=eval_data_path)
     return eval_data, eval_data_path, processed_data_path
 
 
-def create_model_chain(load_model_via: str, prompt_type):
-    if load_model_via.lower() == "ollama":
+def create_model_chain(model_id: int, prompt_type, add_example):
+    if model_id == 0:
         model = load_model_via_ollama()
-    elif load_model_via.lower() == "hf":
-        model = load_model_via_hf()
+    elif model_id == 1:
+        model = load_model_via_ollama()
+    elif model_id == 2 or model_id == 3:
+        raise Exception(f"Model {model_id} is not implemented.")
     else:
-        raise ValueError(f'The parameter load_model_via should either be ollama or hf, but {load_model_via} was given')
+        raise ValueError(f'The parameter model_id should one of the [0,1,2,3], but {model_id} was given')
 
 
-    prompt = get_prompt_template(prompt_type)
+    prompt = get_prompt_template(prompt_type, add_example=add_example)
 
-
-
-    print(f"CURRENT PROMPT IS {prompt}")
     chain = prompt | model
     return chain, model, prompt
 
@@ -284,18 +300,18 @@ def load_model_via_ollama():
 def build_test_info(test_data_path, model, prompt, emotion_set, stats, args):
     """Build the test information dictionary."""
     return {
-        "config": args.__dict__,
         "data_path": test_data_path,
         "elapsed_time_in_sec": round(run_tests.elapsed_time),
         "prompt_name": prompt.name,
         "prompt_template": prompt.template,
         "used_model": model.name,
-        "emotion_set": emotion_set,
-        "stats": stats
+        "emotion_set": str(emotion_set),
+        "stats": stats,
+        "config": args.__dict__,
     }
 
 
-def save_test_results(dataset, processed_data_path, test_info, predictions, actuals, identifiers, experiment_id=None):
+def save_test_results(test_info, predictions, actuals, identifiers, path_to_save):
     """Save test results to a JSON file."""
     test_outputs = [
         {"pred": p, "actual": a, "iden": i}
@@ -307,11 +323,20 @@ def save_test_results(dataset, processed_data_path, test_info, predictions, actu
         "test_outputs": test_outputs
     }
 
-    file_name = f"{dataset.upper()}-{os.path.basename(processed_data_path)}.json"
-    eval_directory = os.path.join(f"EVAL_RESULTS", '' if experiment_id is None else f"Experiment{str(experiment_id)}")
-    makedirs(relative_path_from_project=eval_directory)
+    # file_name = f"{dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}.json"
+    # eval_directory = os.path.join(f"EVAL_RESULTS", '' if .experiment_id is None else f"Experiment{str(args.experiment_id)}")
+    makedirs(relative_path_from_project=path_to_save[:path_to_save.rfind("/")])
+    # file_path = os.path.join(path_to_save)
+    dump_json_test_result(test_result, relative_path_from_project=path_to_save, add_datetime_to_filename=False)
+
+
+def rel_path_to_save_results(args):
+    data_name = get_data_name(args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example)
+    processed_data_path = f"PROCESSED_DATASET/{data_name}"
+    file_name = f"{args.dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}.json"
+    eval_directory = os.path.join(f"EVAL_RESULTS", '' if args.experiment_id is None else f"Experiment{str(args.experiment_id)}")
     file_path = os.path.join(eval_directory, file_name)
-    dump_json_test_result(test_result, relative_path_from_project=file_path, add_datetime_to_filename=True)
+    return file_path
 
 
 def main(config_dict=None):
@@ -327,19 +352,27 @@ def main(config_dict=None):
         args.save = str2bool(args.save)
         args.use_detailed_example = str2bool(args.use_detailed_example)
 
+        print(f"Arguments: {args}")
+
         # Load data
         test_data, test_data_path, processed_data_path = load_eval_data(
             args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example, args.split
         )
 
+        path_to_save = rel_path_to_save_results(args)
+        if args.save and check_path_exist_from_prefix(relative_path_from_project=path_to_save[:-5]):
+            print(f"Results have already been saved at: {path_to_save[:-5]}")
+            return
+
         # Initialize model
-        chain, model, prompt = create_model_chain(args.load_model_via, args.prompt_type)
+        chain, model, prompt = create_model_chain(args.model_id, args.prompt_type, add_example=args.top_n > 0)
 
         # Run tests
         candidate_emotion_set = get_mapped_emotion_set(args.dataset)
         predictions, actuals, identifiers, stats = run_tests(
             chain,
             test_data,
+            max_k=args.max_k,
             dataset_name=args.dataset,
             emotion_set=candidate_emotion_set,
             limit=args.limit,
@@ -350,8 +383,8 @@ def main(config_dict=None):
         test_info = build_test_info(test_data_path, model, prompt, candidate_emotion_set, stats, args)
 
         if args.save:
-            save_test_results(args.dataset, processed_data_path, test_info, predictions, actuals,
-                              identifiers, experiment_id=args.experiment_id)
+            save_test_results(test_info, predictions, actuals,
+                              identifiers, path_to_save)
 
     finally:
         if model is not None:
@@ -366,3 +399,5 @@ def main(config_dict=None):
 
 if __name__ == "__main__":
     main()
+
+

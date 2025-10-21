@@ -6,10 +6,11 @@ from functools import wraps
 import time
 import re
 import chromadb
+from glob import glob
 
 
 PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -91,7 +92,7 @@ class EmotionExtractionStrategy(Enum):
 
 
 def extract_emotion_from_llm_output(output_text, valid_emotions=emotion_set,
-                                    approach:EmotionExtractionStrategy=EmotionExtractionStrategy.OneMentionedValidLabel):
+                                    approach:EmotionExtractionStrategy=EmotionExtractionStrategy.FirstMentionedValidLabel):
     output_text = output_text.lower()
     if approach == EmotionExtractionStrategy.FirstMentionedValidLabel:
         first_mentioned_emotion = None
@@ -102,9 +103,8 @@ def extract_emotion_from_llm_output(output_text, valid_emotions=emotion_set,
                 if emotion_pos < first_mentioned_emotion_pos:
                     first_mentioned_emotion_pos = emotion_pos
                     first_mentioned_emotion = emotion
-            if first_mentioned_emotion is None:
-                return "NoValidEmotionFound"
-                raise ValueError(f"No valid emotion was mentioned in the output: {output_text}")
+        if first_mentioned_emotion is None:
+            return "NoValidEmotionFound"
         return first_mentioned_emotion
 
     elif approach == EmotionExtractionStrategy.OneMentionedValidLabel:
@@ -130,6 +130,11 @@ def load_json_multiline(path):
         for line in f:
             data.append(json.loads(line))
     return data
+
+def check_path_exist_from_prefix(path=None, relative_path_from_project=None):
+    path = get_path(path=path, relative_path_from_project=relative_path_from_project)
+    return len(glob(path + "*")) > 0
+
 
 def dump_json_test_result(result, path=None, relative_path_from_project=None, add_datetime_to_filename=False, verbose=True):
     path = get_path(path=path, relative_path_from_project=relative_path_from_project)
