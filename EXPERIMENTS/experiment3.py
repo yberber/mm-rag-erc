@@ -15,12 +15,12 @@ config = {
     "top_n": 2,
     "max_m": 7,
     "use_detailed_example": True,
-    "limit": 25,
-    "model_id": 0,
+    "limit": None,
+    "model_id": 1,
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
-    "experiment_id": 2
+    "experiment_id": 3
 }
 
 datasets = ["iemocap", "meld"]

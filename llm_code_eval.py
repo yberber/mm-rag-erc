@@ -198,7 +198,7 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
         prediction = chain.invoke({
             **inp, "candidate_emotions": emotion_set_text
         })
-        print(list(chain)[1][1].invoke({**inp, "candidate_emotions": emotion_set_text}).text)
+        # print(list(chain)[1][1].invoke({**inp, "candidate_emotions": emotion_set_text}).text)
 
         predictions.append(prediction)
         actuals.append(target)
