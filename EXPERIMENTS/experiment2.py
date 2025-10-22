@@ -24,7 +24,7 @@ config = {
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
-    "experiment_id": 2
+    "experiment_id": 3
 }
 
 datasets = ["iemocap", "meld"]
