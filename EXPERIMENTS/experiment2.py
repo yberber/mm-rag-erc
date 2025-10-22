@@ -19,8 +19,8 @@ config = {
     "top_n": 1,
     "max_m": 1,
     "use_detailed_example": "False",
-    "limit": 10,
-    "model_id": 0,
+    "limit": None,
+    "model_id": 1,
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
@@ -47,12 +47,6 @@ for dataset in datasets:
             else:
                 for max_m in max_m_list:
                     for example_detailed_flag in use_detailed_example:
-                        config["dataset"] = dataset
-                        config["max_k"] = max_k
-                        config["top_n"] = top_n
-                        config["example_type"] = db_type
-                        config["max_m"] = max_m
-                        config["use_detailed_example"] = str(example_detailed_flag)
                         c = get_updated_config(config, dataset, max_k, top_n, db_type, max_m, example_detailed_flag)
                         config_list.append(c)
 
