@@ -19,8 +19,8 @@ config = {
     "top_n": 1,
     "max_m": 1,
     "use_detailed_example": "False",
-    "limit": None,
-    "model_id": 1,
+    "limit": 20,
+    "model_id": 0,
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
@@ -51,6 +51,13 @@ for dataset in datasets:
                         config_list.append(c)
 
 
+# no examples provided
+special_case_iemocap = get_updated_config(config, "iemocap", max_k=12, top_n=0, example_type="single", max_m=0, use_detailed_example=False)
+special_case_meld = get_updated_config(config, "meld", max_k=12, top_n=0, example_type="single", max_m=0, use_detailed_example=False)
+
+config_list.clear()
+config_list.append(special_case_iemocap)
+config_list.append(special_case_meld)
 
 for config in config_list:
     llm_code_eval.main(config)

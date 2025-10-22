@@ -190,13 +190,13 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
         target = data["target"]
         identifier = data["idx"]
 
+
         # input_variables = ["demonstrations", "history", "speaker_id", "utterance", "audio_features",
                            # "candidate_emotions"],
 
         inp["history"] = "\n".join(inp["history"].split("\n")[-(max_k+1):])
         prediction = chain.invoke({
-            **inp,
-            "candidate_emotions": emotion_set_text
+            **inp, "candidate_emotions": emotion_set_text
         })
 
         predictions.append(prediction)
@@ -232,22 +232,32 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
     return predictions, actuals, identifiers, stats
 
 
-def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, use_default_k=None):
-    if use_default_k is not None:
-        if 0 <= max_k <= use_default_k:
+def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=False):
+    if get_respective_vectorstore_name:
+        if 0 <= max_k <= 20:
             max_k = 20
+            # use the most straigtforward vectorstore cache if you don't need example
+            if top_n == 0:
+                return f"{dataset.upper()}/k{max_k}_single_n1_m1"
         else:
             raise Exception("max_k must be between 1 and 20")
-    demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
+    if top_n == 0:
+        demonstration_id =  f"noexample_n0_m0"
+    else:
+        demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
     return f"{dataset.upper()}/k{max_k}_{demonstration_id}"
 
 def load_eval_data(dataset, max_k, example_type, top_n, max_m, use_detailed_example, split):
     """Load test data from the processed dataset directory."""
-    data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, use_default_k=20)
+    data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=True)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
     eval_data_path = os.path.join(processed_data_path, f"{split.lower()}.json")
     eval_data = load_json(relative_path_from_project=eval_data_path)
-    return eval_data, eval_data_path, processed_data_path
+
+    if top_n == 0:
+        [inp.pop("demonstrations", None) for data in eval_data for inp in [data["input"]]]
+
+    return eval_data, eval_data_path
 
 
 def create_model_chain(model_id: int, prompt_type, add_example):
@@ -355,7 +365,7 @@ def main(config_dict=None):
         print(f"Arguments: {args}")
 
         # Load data
-        test_data, test_data_path, processed_data_path = load_eval_data(
+        test_data, test_data_path = load_eval_data(
             args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example, args.split
         )
 
