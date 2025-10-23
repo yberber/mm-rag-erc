@@ -1,0 +1,284 @@
+{
+    "execution_info": null,
+    "dataset": {
+        "train": [
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.",
+                    "utterance": "also I was the point person on my company's transition from the KL-5 to GR-6 system.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_0",
+                "emo": "neutral",
+                "output": "Showing expertise and relevance in a business conversation."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.",
+                    "utterance": "You must've had your hands full.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_1",
+                "emo": "neutral",
+                "output": "Acknowledging Chandler's workload as a compliment to his expertise."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.",
+                    "utterance": "That I did. That I did.",
+                    "audio_features": "medium speech rate, low pitch, and medium intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_2",
+                "emo": "neutral",
+                "output": "Chandler is agreeing emphatically and expressing genuine enthusiasm for the transition."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.",
+                    "utterance": "So let's talk a little bit about your duties.",
+                    "audio_features": "high speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_3",
+                "emo": "neutral",
+                "output": "To assess Chandler's relevant work experience and skills."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.",
+                    "utterance": "My duties?  All right.",
+                    "audio_features": "medium speech rate, high pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_4",
+                "emo": "surprised",
+                "output": "Chandler is annoyed, implying reluctance in discussing his work details."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.",
+                    "utterance": "Now you'll be heading a whole division, so you'll have a lot of duties.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_5",
+                "emo": "neutral",
+                "output": "The interviewer is introducing the topic of Chandler's new responsibilities."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.",
+                    "utterance": "I see.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_6",
+                "emo": "neutral",
+                "output": "Chandler acknowledges receipt of information about his new role responsibilities."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.",
+                    "utterance": "But there'll be perhaps 30 people under you so you can dump a certain amount on them.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_7",
+                "emo": "neutral",
+                "output": "The interviewer is hinting that Chandler will delegate tasks."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.",
+                    "utterance": "Good to know.",
+                    "audio_features": "low speech rate, high pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_8",
+                "emo": "neutral",
+                "output": "Chandler is being sarcastic about dumping tasks on subordinates."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.\nThe Interviewer: We can go into detail",
+                    "utterance": "We can go into detail",
+                    "audio_features": "low speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_9",
+                "emo": "neutral",
+                "output": "To provide additional information and clarify specific job responsibilities."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.\nThe Interviewer: We can go into detail\nChandler: No don't I beg of you!",
+                    "utterance": "No don't I beg of you!",
+                    "audio_features": "high speech rate, medium pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_10",
+                "emo": "fearful",
+                "output": "Chandler is jokingly expressing relief at avoiding a tedious discussion."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.\nThe Interviewer: We can go into detail\nChandler: No don't I beg of you!\nThe Interviewer: All right then, we'll have a definite answer for you on Monday, but I think I can say with some confidence, you'll fit in well here.",
+                    "utterance": "All right then, we'll have a definite answer for you on Monday, but I think I can say with some confidence, you'll fit in well here.",
+                    "audio_features": "medium speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_11",
+                "emo": "neutral",
+                "output": "The interviewer is making the candidate feel more at ease."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.\nThe Interviewer: We can go into detail\nChandler: No don't I beg of you!\nThe Interviewer: All right then, we'll have a definite answer for you on Monday, but I think I can say with some confidence, you'll fit in well here.\nChandler: Really?!",
+                    "utterance": "Really?!",
+                    "audio_features": "low speech rate, low pitch, and high intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_0_12",
+                "emo": "surprised",
+                "output": "Chandler is being sarcastic about the Interviewer's optimistic assessment."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: also I was the point person on my company's transition from the KL-5 to GR-6 system.\nThe Interviewer: You must've had your hands full.\nChandler: That I did. That I did.\nThe Interviewer: So let's talk a little bit about your duties.\nChandler: My duties?  All right.\nThe Interviewer: Now you'll be heading a whole division, so you'll have a lot of duties.\nChandler: I see.\nThe Interviewer: But there'll be perhaps 30 people under you so you can dump a certain amount on them.\nChandler: Good to know.\nThe Interviewer: We can go into detail\nChandler: No don't I beg of you!\nThe Interviewer: All right then, we'll have a definite answer for you on Monday, but I think I can say with some confidence, you'll fit in well here.\nChandler: Really?!\nThe Interviewer: Absolutely.  You can relax",
+                    "utterance": "Absolutely.  You can relax",
+                    "audio_features": "low speech rate, low pitch, and high intensity",
+                    "speaker_id": "The Interviewer"
+                },
+                "iden": "m_0_13",
+                "emo": "neutral",
+                "output": "To ease Chandler's tension, reassure him about job prospects."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?",
+                    "utterance": "But then who? The waitress I went out with last month?",
+                    "audio_features": "medium speech rate, low pitch, and medium intensity",
+                    "speaker_id": "Joey"
+                },
+                "iden": "m_1_0",
+                "emo": "surprised",
+                "output": "Joey is questioning who his partner is supposed to be."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?\nRachel: You know? Forget it!",
+                    "utterance": "You know? Forget it!",
+                    "audio_features": "low speech rate, low pitch, and low intensity",
+                    "speaker_id": "Rachel"
+                },
+                "iden": "m_1_1",
+                "emo": "sad",
+                "output": "Rachel is dismissing Joey's suggestion as implausible and awkward."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?\nRachel: You know? Forget it!\nJoey: No-no-no-no, no! Who, who were you talking about?",
+                    "utterance": "No-no-no-no, no! Who, who were you talking about?",
+                    "audio_features": "medium speech rate, high pitch, and medium intensity",
+                    "speaker_id": "Joey"
+                },
+                "iden": "m_1_2",
+                "emo": "surprised",
+                "output": "Joey is reacting with surprise at a personal revelation."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?\nRachel: You know? Forget it!\nJoey: No-no-no-no, no! Who, who were you talking about?\nRachel: No, I-I-I-I don't, I actually don't know",
+                    "utterance": "No, I-I-I-I don't, I actually don't know",
+                    "audio_features": "medium speech rate, low pitch, and low intensity",
+                    "speaker_id": "Rachel"
+                },
+                "iden": "m_1_3",
+                "emo": "fearful",
+                "output": "Rachel is avoiding further conversation to avoid awkwardness and embarrassment."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?\nRachel: You know? Forget it!\nJoey: No-no-no-no, no! Who, who were you talking about?\nRachel: No, I-I-I-I don't, I actually don't know\nJoey: Ok!",
+                    "utterance": "Ok!",
+                    "audio_features": "medium speech rate, medium pitch, and low intensity",
+                    "speaker_id": "Joey"
+                },
+                "iden": "m_1_4",
+                "emo": "neutral",
+                "output": "Joey implies that he thinks Rachel knows who he is talking about."
+            },
+            {
+                "inputs": {
+                    "history": "Joey: But then who? The waitress I went out with last month?\nRachel: You know? Forget it!\nJoey: No-no-no-no, no! Who, who were you talking about?\nRachel: No, I-I-I-I don't, I actually don't know\nJoey: Ok!\nRachel: Yeah, sure!",
+                    "utterance": "Yeah, sure!",
+                    "audio_features": "low speech rate, medium pitch, and low intensity",
+                    "speaker_id": "Rachel"
+                },
+                "iden": "m_1_6",
+                "emo": "neutral",
+                "output": "Rachel is being sarcastic about her uncertainty in a playful manner."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: Hey, Mon.",
+                    "utterance": "Hey, Mon.",
+                    "audio_features": "high speech rate, low pitch, and medium intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_2_0",
+                "emo": "neutral",
+                "output": "He's likely greeting a friend in an informal, casual tone."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: Hey, Mon.\nMonica: Hey-hey-hey. You wanna hear something that sucks.",
+                    "utterance": "Hey-hey-hey. You wanna hear something that sucks.",
+                    "audio_features": "medium speech rate, medium pitch, and high intensity",
+                    "speaker_id": "Monica"
+                },
+                "iden": "m_2_1",
+                "emo": "neutral",
+                "output": "Monica is seeking attention and expressing a negative experience or feeling."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: Hey, Mon.\nMonica: Hey-hey-hey. You wanna hear something that sucks.\nChandler: Do I ever.",
+                    "utterance": "Do I ever.",
+                    "audio_features": "low speech rate, medium pitch, and medium intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_2_2",
+                "emo": "joyful",
+                "output": "Chandler is being sarcastic, expressing enthusiasm for hearing bad news."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: Hey, Mon.\nMonica: Hey-hey-hey. You wanna hear something that sucks.\nChandler: Do I ever.\nMonica: Chris says they're closing down the bar.",
+                    "utterance": "Chris says they're closing down the bar.",
+                    "audio_features": "high speech rate, medium pitch, and medium intensity",
+                    "speaker_id": "Monica"
+                },
+                "iden": "m_2_3",
+                "emo": "sad",
+                "output": "Monica is trying to break the news in a casual tone."
+            },
+            {
+                "inputs": {
+                    "history": "Chandler: Hey, Mon.\nMonica: Hey-hey-hey. You wanna hear something that sucks.\nChandler: Do I ever.\nMonica: Chris says they're closing down the bar.\nChandler: No way!",
+                    "utterance": "No way!",
+                    "audio_features": "medium speech rate, high pitch, and medium intensity",
+                    "speaker_id": "Chandler"
+                },
+                "iden": "m_2_4",
+                "emo": "surprised",
+                "output": "Chandler is expressing shock and disagreement at the news."
+            }
+        ],
+        "dev": [],
+        "test": []
+    }
+}

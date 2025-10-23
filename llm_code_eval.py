@@ -19,7 +19,9 @@ from utils import (
     extract_emotion_from_llm_output,
     dump_json_test_result,
     load_json, str2bool,
-    check_path_exist_from_prefix
+    check_path_exist_from_prefix,
+    load_model_via_hf,
+    load_model_via_ollama
 )
 from prompts import *
 
@@ -278,34 +280,7 @@ def create_model_chain(model_id: int, prompt_type, add_example):
     return chain, model, prompt
 
 
-def load_model_via_hf():
-    from langchain_huggingface.llms import HuggingFacePipeline
-    if not torch.cuda.is_available():
-        raise Exception("Cuda should be available to use the model loaded via huggingface for getting responses in a reasonable timeQ")
-    print("Cuda Device Count:", torch.cuda.device_count())
-    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-    model = HuggingFacePipeline.from_model_id(
-        model_id=model_id,
-        task="text-generation",
-        pipeline_kwargs={"max_new_tokens": 10, "return_full_text": False},
-        # device_map="auto",
-        # This line forces the model onto the GPU
-        device=0,
-        model_kwargs={"dtype": torch.bfloat16}, # More standard way to set dtype
-    )
-    model.name = f'{model_id.split("/")[1]} via HF'
-    return model
 
-
-def load_model_via_ollama():
-    from langchain_ollama.llms import OllamaLLM
-    """Initialize and return the model chain."""
-    model_id = "llama3.1:8b"
-    model = OllamaLLM(
-        model=model_id,
-        num_predict=10)
-    model.name = f'{model_id} via Ollama'
-    return model
     
 
 def build_test_info(test_data_path, model, prompt, emotion_set, stats, args):

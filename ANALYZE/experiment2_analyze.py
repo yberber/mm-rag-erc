@@ -2,15 +2,13 @@
 import utils
 from glob import glob
 import pandas as pd
-import numpy as np
+
+pd.options.display.float_format = "{:.3f}".format
 
 utils.set_pandas_display_options()
 utils.chdir_in_project("ANALYZE")
 utils.PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
 
-
-results = {"name": {'tr': 'Yusuf'}}
-results.keys()
 
 
 results = {k: {} for k in ['meld', 'iemocap']}

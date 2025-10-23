@@ -266,3 +266,88 @@ GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE = PromptTemplate(
 )
 
 GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE.name = "GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE"
+
+
+
+EMOTION_RECOGNITION_TEMPLATE = """Now you are an expert in dialogue emotion recognition.
+
+Example(s):
+{demonstrations}
+
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+
+Based on the above conversation context, please select the emotional label of < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >, from < {candidate_emotions} >.
+Please output only the selected emotion label and make no explanation:
+"""
+
+
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE = """Now you are an expert who is good at using commonsense for reasoning.
+The following conversation noted between ’### ###’ involves several speakers.
+###
+{history}
+###
+Based on the above historical utterances, please use commonsense to infer the reaction of potential listeners in < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >.
+Output no more than 10 words:
+"""
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "audio_features"],
+    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
+)
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT"
+
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE = """Now you are an expert who is good at using commonsense for reasoning.
+The following conversation noted between ’### ###’ involves several speakers.
+###
+{history}
+###
+Based on the above historical utterances, please use commonsense to infer the reaction of potential listeners in < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >.
+Output no more than 10 words:
+"""
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "audio_features"],
+    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
+)
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT"
+
+
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_ALT1 = """Now you are an expert who is good at using commonsense for reasoning.
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+Based on the above historical utterances, please use commonsense to describe the underlying **mental state or behavior** of < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >.
+Output no more than 10 words:
+"""
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1 = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "audio_features"],
+    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_ALT1
+)
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1"
+
+
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_ALT2 = """Now you are an expert who is good at using commonsense for reasoning.
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+Based on the above historical utterances, please use commonsense to infer the **speaker's intention or reason** for saying < "{speaker_id}" : "{utterance}" >, with < {audio_features} >.
+Output no more than 10 words:
+"""
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2 = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "audio_features"],
+    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_ALT2
+)
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2"
+
+

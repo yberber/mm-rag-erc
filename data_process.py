@@ -4,7 +4,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from tqdm import tqdm
 import os
 from utils import (set_pandas_display_options, load_json, load_dataframe_from_json,
-                   get_dataset_as_dataframe, str2bool)
+                   get_dataset_as_dataframe, str2bool, abstacted_audio_text)
 import utils
 set_pandas_display_options()
 
@@ -132,9 +132,7 @@ class DemonstrationCreatorViaCache:
 
 
 
-def abstacted_audio_text(row):
-    return (f"{row['rate_level']} speech rate, {row['pitch_level']} "
-            f"pitch, and {row['intensity_level']} intensity")
+
 
 def create_history_context(conversation, current_utterance_idx, max_k):
     context = ""

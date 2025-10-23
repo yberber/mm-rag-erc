@@ -9,8 +9,8 @@ import chromadb
 from glob import glob
 
 
-# PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -331,6 +331,39 @@ def str2bool (val):
     else:
         raise ValueError("invalid truth value %r" % (val,))
 
+
+def load_model_via_hf(model_id="meta-llama/Meta-Llama-3.1-8B-Instruct", max_output_tokens=10):
+    from langchain_huggingface.llms import HuggingFacePipeline
+    import torch
+    if not torch.cuda.is_available():
+        raise Exception("Cuda should be available to use the model loaded via huggingface for getting responses in a reasonable timeQ")
+    print("Cuda Device Count:", torch.cuda.device_count())
+    model = HuggingFacePipeline.from_model_id(
+        model_id=model_id,
+        task="text-generation",
+        pipeline_kwargs={"max_new_tokens": max_output_tokens, "return_full_text": False},
+        # device_map="auto",
+        # This line forces the model onto the GPU
+        device=0,
+        model_kwargs={"dtype": torch.bfloat16}, # More standard way to set dtype
+    )
+    model.name = f'{model_id.split("/")[1]} via HF'
+    return model
+
+
+def load_model_via_ollama(model_id="llama3.1:8b", max_output_tokens=10):
+    from langchain_ollama.llms import OllamaLLM
+    """Initialize and return the model chain."""
+    model = OllamaLLM(
+        model=model_id,
+        num_predict=max_output_tokens)
+    model.name = f'{model_id} via Ollama'
+    return model
+
+
+def abstacted_audio_text(row):
+    return (f"{row['rate_level']} speech rate, {row['pitch_level']} "
+            f"pitch, and {row['intensity_level']} intensity")
 
 # eval_folder = "EVAL_RESULTS/"
 #
