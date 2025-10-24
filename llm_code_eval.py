@@ -357,7 +357,10 @@ def save_test_results(test_info, predictions, actuals, identifiers, path_to_save
 def rel_path_to_save_results(args):
     data_name = get_data_name(args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
-    file_name = f"{args.dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}.json"
+    file_name = f"{args.dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}"
+    if args.speaker_characteristics is not None:
+        file_name += f"_{args.speaker_characteristics}"
+    file_name += ".json"
     eval_directory = os.path.join(f"EVAL_RESULTS", '' if args.experiment_id is None else f"Experiment{str(args.experiment_id)}")
     file_path = os.path.join(eval_directory, file_name)
     return file_path

@@ -9,8 +9,8 @@ import chromadb
 from glob import glob
 
 
-PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+# PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -266,7 +266,6 @@ def get_idx_to_speaker_characteristics_hint(speaker_characteristics_type, datase
         data_from_model2 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model2_default_k20_{split}_size{size}.json")["dataset"]["dev"]
         data_from_model3 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model3_default_k20_{split}_size{size}.json")["dataset"]["dev"]
 
-        prefix = ""
         if speaker_characteristics_type == "default":
             prefix = "reaction of potential listeners: "
         elif speaker_characteristics_type == "alt1":
@@ -274,12 +273,9 @@ def get_idx_to_speaker_characteristics_hint(speaker_characteristics_type, datase
         else:
             prefix = "speaker's intention or reason: "
 
-
         data_from_model2 = {d["iden"]: prefix+d["output"] for d in data_from_model2 if len(d["output"]) > 0}
         data_from_model3 = {d["iden"]: prefix+d["output"] for d in data_from_model3}
         data_from_model3.update(data_from_model2)
-
-
         return data_from_model3
     else:
         raise ValueError(f"Unknown speaker characteristics type: {speaker_characteristics_type}")
