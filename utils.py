@@ -260,6 +260,32 @@ def chdir_in_project(path):
     os.chdir(os.path.join(PROJECT_PATH, path))
 
 
+def get_idx_to_speaker_characteristics_hint(speaker_characteristics_type, dataset_name, split = "dev"):
+    if speaker_characteristics_type in ["default", "alt1" ,"alt2"] and split == "dev":
+        size = 1109 if dataset_name.upper() == "MELD" else 825
+        data_from_model2 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model2_default_k20_{split}_size{size}.json")["dataset"]["dev"]
+        data_from_model3 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model3_default_k20_{split}_size{size}.json")["dataset"]["dev"]
+
+        prefix = ""
+        if speaker_characteristics_type == "default":
+            prefix = "reaction of potential listeners: "
+        elif speaker_characteristics_type == "alt1":
+            prefix = "mental state or behavior: "
+        else:
+            prefix = "speaker's intention or reason: "
+
+
+        data_from_model2 = {d["iden"]: prefix+d["output"] for d in data_from_model2 if len(d["output"]) > 0}
+        data_from_model3 = {d["iden"]: prefix+d["output"] for d in data_from_model3}
+        data_from_model3.update(data_from_model2)
+
+
+        return data_from_model3
+    else:
+        raise ValueError(f"Unknown speaker characteristics type: {speaker_characteristics_type}")
+
+
+
 def get_dataset_as_dataframe(dataset_name, splits=None, columns=None):
     if dataset_name.lower() == "meld":
         meld_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "meld_erc_with_categories.csv")

@@ -1,0 +1,86 @@
+{
+    "test_info": {
+        "data_path": "PROCESSED_DATASET/IEMOCAP/k20_hybridV2_n2_m7/dev.json",
+        "elapsed_time_in_sec": 32,
+        "prompt_name": "GEMINI_EMOTION_RECOGNITION_PROMPT_WITH_HINT",
+        "prompt_template": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\nYou are a highly skilled AI expert in multimodal emotion recognition. Your task is to analyze the provided conversation, a specific target utterance, and its audio features to determine the speaker's emotion from a given list of options.\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n<task_definition>\nAnalyze the data below to identify the emotion of the speaker in the target utterance.\n</task_definition>\n\n<examples>\n{demonstrations}\n</examples>\n\n<conversation_context>\n<history>\n{history}\n</history>\n<target_utterance>\n  <speaker>{speaker_id}</speaker>\n  <text>{utterance}</text>\n  <audio_features>{audio_features}</audio_features>\n  <contextual_inference>{speaker_characteristics}</contextual_inference></target_utterance>\n</conversation_context>\n\n<emotion_options>\n{candidate_emotions}\n</emotion_options>\n\nBased on all the provided information, what is the emotion of the target utterance? Provide your answer inside <emotion> XML tags. Do not include any other text or explanation.\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n<emotion>\n",
+        "used_model": "llama3.1:8b via Ollama",
+        "emotion_set": "['joyful', 'sad', 'neutral', 'angry', 'excited', 'frustrated']",
+        "stats": {
+            "accuracy_score": 0.8,
+            "f1_score": 0.84,
+            "correct_count": 8,
+            "prediction_count": 10,
+            "start_time": "2025-10-24 16:15:32",
+            "end_time": "2025-10-24 16:16:04",
+            "elapsed_time": "0:00:32"
+        },
+        "config": {
+            "dataset": "iemocap",
+            "max_k": 20,
+            "example_type": "hybrid",
+            "top_n": 2,
+            "max_m": 7,
+            "use_detailed_example": true,
+            "limit": 10,
+            "model_id": 0,
+            "split": "dev",
+            "save": true,
+            "prompt_type": "gemini",
+            "speaker_characteristics": "default",
+            "experiment_id": 4
+        }
+    },
+    "test_outputs": [
+        {
+            "pred": "frustrated",
+            "actual": "frustrated",
+            "iden": "i_108_0"
+        },
+        {
+            "pred": "frustrated",
+            "actual": "frustrated",
+            "iden": "i_108_1"
+        },
+        {
+            "pred": "neutral",
+            "actual": "neutral",
+            "iden": "i_108_2"
+        },
+        {
+            "pred": "I need to analyze the conversation context and the target",
+            "actual": "frustrated",
+            "iden": "i_108_3"
+        },
+        {
+            "pred": "frustrated",
+            "actual": "frustrated",
+            "iden": "i_108_4"
+        },
+        {
+            "pred": "sad",
+            "actual": "neutral",
+            "iden": "i_108_5"
+        },
+        {
+            "pred": "The task was to analyze the conversation and identify the",
+            "actual": "neutral",
+            "iden": "i_108_6"
+        },
+        {
+            "pred": "neutral",
+            "actual": "neutral",
+            "iden": "i_108_7"
+        },
+        {
+            "pred": "frustrated",
+            "actual": "frustrated",
+            "iden": "i_108_8"
+        },
+        {
+            "pred": "The speaker's tone and advice in the context of",
+            "actual": "neutral",
+            "iden": "i_108_9"
+        }
+    ]
+}

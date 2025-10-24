@@ -351,3 +351,43 @@ SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2 = PromptTemplate(
 SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2"
 
 
+
+GEMINI_EMOTION_RECOGNITION_TEMPLATE_WITH_HINT = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a highly skilled AI expert in multimodal emotion recognition. Your task is to analyze the provided conversation, a specific target utterance, and its audio features to determine the speaker's emotion from a given list of options.
+
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+<task_definition>
+Analyze the data below to identify the emotion of the speaker in the target utterance.
+</task_definition>
+
+<examples>
+{demonstrations}
+</examples>
+
+<conversation_context>
+<history>
+{history}
+</history>
+<target_utterance>
+  <speaker>{speaker_id}</speaker>
+  <text>{utterance}</text>
+  <audio_features>{audio_features}</audio_features>
+  <contextual_inference>{speaker_characteristics}</contextual_inference>
+</target_utterance>
+</conversation_context>
+
+<emotion_options>
+{candidate_emotions}
+</emotion_options>
+
+Based on all the provided information, what is the emotion of the target utterance? Provide your answer inside <emotion> XML tags. Do not include any other text or explanation.
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<emotion>
+"""
+
+
+GEMINI_EMOTION_RECOGNITION_PROMPT_WITH_HINT= PromptTemplate(
+    input_variables=["demonstrations", "history", "speaker_id", "utterance", "audio_features", "candidate_emotions", "speaker_characteristics"],
+    template=GEMINI_EMOTION_RECOGNITION_TEMPLATE_WITH_HINT
+)
+GEMINI_EMOTION_RECOGNITION_PROMPT_WITH_HINT.name = "GEMINI_EMOTION_RECOGNITION_PROMPT_WITH_HINT"

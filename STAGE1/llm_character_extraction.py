@@ -81,9 +81,16 @@ def get_prompt_template(prompt_type):
             raise ValueError(f"Unknown prompt type: {prompt_type}")
 
 
-def load_model_via_vertexai(model_id: str = "gemini-2.5-flash-lite", max_output_tokens: int = 10):
+def load_model_via_vertexai(model_id: str = "gemini-2.5-flash-lite", max_output_tokens: int = 10, disable_thinking = False):
     from langchain_google_vertexai import VertexAI
-    model = VertexAI(model=model_id, temperature=0)
+    if disable_thinking:
+        model_kwargs = {
+            "disable_thinking": True
+        }
+    else:
+        model_kwargs = {}
+    model = VertexAI(model=model_id, temperature=0, max_output_tokens=max_output_tokens, model_kwargs=model_kwargs)
+
     model.name = f"{model_id} via VertexAI"
     return model
 
@@ -95,7 +102,7 @@ def create_model_chain(model_id: int, prompt_type: str):
     elif model_id == 1:
         model = load_model_via_hf(max_output_tokens=max_output_tokens)
     elif model_id == 2:
-        model = load_model_via_vertexai("gemini-2.5-flash", max_output_tokens=max_output_tokens)
+        model = load_model_via_vertexai("gemini-2.5-flash", max_output_tokens=1000, disable_thinking=True)
     elif model_id == 3:
         model = load_model_via_vertexai("gemini-2.5-flash-lite", max_output_tokens=max_output_tokens)
 
@@ -121,14 +128,22 @@ def create_history_context(conversation, turn_idx, max_k):
     return context.strip("\n")
 
 
-def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None):
+def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, exclude_na=False):
     columns_to_retrive = ["split", "dialog_idx", "turn_idx", "speaker", "utterance", "mapped_emotion", "idx", "intensity_level",
          "pitch_level", "rate_level"]
     df = get_dataset_as_dataframe(dataset_name, splits=splits, columns=columns_to_retrive)
 
-    df["no_nan"] = (df.isna().sum(axis=1) == 0)
-    df = df.dropna(axis=0)
-    assert df[df["no_nan"]].isna().sum().sum() == 0
+    if exclude_na:
+        df["no_nan"] = (df.isna().sum(axis=1) == 0)
+        df = df.dropna(axis=0)
+        assert df[df["no_nan"]].isna().sum().sum() == 0
+    else:
+        df.fillna({"intensity_level":"medium"}, inplace=True)
+        df.fillna({"pitch_level":"medium"}, inplace=True)
+        df.fillna({"rate_level":"medium"}, inplace=True)
+        df["no_nan"] = True
+        assert df.isna().sum().sum() == 0
+
 
     if limit is not None:
         df = df[:limit]
@@ -210,7 +225,7 @@ def rel_path_to_save_results(args, dataset):
     split_text = "train-dev-test" if args.splits is None else "@".join(args.splits)
     dataset_size = np.sum([len(dataset[split]) for split in dataset])
     folder = "STAGE1/data/"
-    data_name = f"{args.dataset_name.upper()}-model{args.model_id}_{args.prompt_type}_k{args.max_k}_{split_text}_size{dataset_size}"
+    data_name = f"{args.dataset_name.upper()}-model{args.model_id}_{args.prompt_type}_k{args.max_k}_{split_text}_size{dataset_size}.json"
     file_path = os.path.join(folder, data_name)
     return file_path
 
@@ -241,7 +256,7 @@ def save_results(test_info, dataset, path_to_save):
     # eval_directory = os.path.join(f"EVAL_RESULTS", '' if .experiment_id is None else f"Experiment{str(args.experiment_id)}")
     makedirs(relative_path_from_project=path_to_save[:path_to_save.rfind("/")])
     # file_path = os.path.join(path_to_save)
-    dump_json_test_result(test_result, relative_path_from_project=path_to_save, add_datetime_to_filename=True)
+    dump_json_test_result(test_result, relative_path_from_project=path_to_save, add_datetime_to_filename=False)
 
 
 def main(config_dict=None):

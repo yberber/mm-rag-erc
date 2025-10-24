@@ -12,6 +12,7 @@ from tqdm import tqdm
 import torch
 from sklearn.metrics import accuracy_score, f1_score
 
+import utils
 from utils import (
     makedirs,
     timing,
@@ -112,20 +113,34 @@ def parse_arguments():
         choices=["default", "gemini", "claude", "gpt5"],
         help="Determine which prompt to use"
     )
+
+    parser.add_argument(
+        "--speaker_characteristics",
+        type=str,
+        default=None,
+        choices=[None, "default", "alt1", "alt2"],
+        help="Optionally, you can add the prompt speaker characteristics "
+             "to the prompt as a hint. If None, it won't be added"
+    )
     return parser.parse_args()
 
-def get_prompt_template(prompt_type, add_example):
-    match prompt_type:
-        case "default":
-            return EMOTION_RECOGNITION_PROMPT if add_example else EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
-        case "gemini":
-            return GEMINI_EMOTION_RECOGNITION_PROMPT if add_example else GEMINI_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
-        case "claude":
-            return CLAUDE_EMOTION_RECOGNITION_PROMPT if add_example else CLAUDE_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
-        case "gpt5":
-            return GPT5_EMOTION_RECOGNITION_PROMPT if add_example else GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
-        case _:
-            raise ValueError(f"Unknown prompt type: {prompt_type}")
+def get_prompt_template(prompt_type, add_example, speaker_characteristics):
+    if speaker_characteristics is not None and prompt_type == "gemini":
+        return GEMINI_EMOTION_RECOGNITION_PROMPT_WITH_HINT
+    elif speaker_characteristics is None:
+        match prompt_type:
+            case "default":
+                return EMOTION_RECOGNITION_PROMPT if add_example else EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
+            case "gemini":
+                return GEMINI_EMOTION_RECOGNITION_PROMPT if add_example else GEMINI_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
+            case "claude":
+                return CLAUDE_EMOTION_RECOGNITION_PROMPT if add_example else CLAUDE_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
+            case "gpt5":
+                return GPT5_EMOTION_RECOGNITION_PROMPT if add_example else GPT5_EMOTION_RECOGNITION_PROMPT_WITHOUT_EXAMPLE
+            case _:
+                raise ValueError(f"Unknown prompt type: {prompt_type}")
+    else:
+        raise ValueError(f"Unknown speaker characteristics: {speaker_characteristics}")
 
 
 def is_prediction_correct(prediction, expected_output, emotion_set):
@@ -215,10 +230,15 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
 
         extracted_predictions.append(extracted_prediction)
 
-
         if verbose:
-            print(f"{identifier}, prediction: {prediction}, target: {target}")
+            # input_prompt = list(chain)[1][1].invoke({**inp, 'candidate_emotions': emotion_set_text})
+            # print(f"Input prompt:\n{str(input_prompt)}")
+            print(f" => {identifier}, prediction: {prediction}, target: {target}")
             print(f"Score: {correct_count} / {prediction_count}")
+            print("*****************************")
+
+        # if verbose:
+        #     print(f"{identifier}, prediction: {prediction}, target: {target}")
 
     end_time = datetime.datetime.now()
 
@@ -250,8 +270,16 @@ def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_examp
         demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
     return f"{dataset.upper()}/k{max_k}_{demonstration_id}"
 
-def load_eval_data(dataset, max_k, example_type, top_n, max_m, use_detailed_example, split):
+def load_eval_data(args):
     """Load test data from the processed dataset directory."""
+    dataset = args.dataset
+    max_k = args.max_k
+    example_type = args.example_type
+    top_n = args.top_n
+    max_m = args.max_m
+    use_detailed_example = args.use_detailed_example
+    split = args.split
+    speaker_characteristics = args.speaker_characteristics
     data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=True)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
     eval_data_path = os.path.join(processed_data_path, f"{split.lower()}.json")
@@ -260,10 +288,20 @@ def load_eval_data(dataset, max_k, example_type, top_n, max_m, use_detailed_exam
     if top_n == 0:
         [inp.pop("demonstrations", None) for data in eval_data for inp in [data["input"]]]
 
+    if speaker_characteristics is not None:
+        idx_to_speaker_characteristics = utils.get_idx_to_speaker_characteristics_hint(speaker_characteristics,
+                                                                                       dataset)
+        for data in eval_data:
+            data["input"]["speaker_characteristics"] = idx_to_speaker_characteristics[data["idx"]]
     return eval_data, eval_data_path
 
 
-def create_model_chain(model_id: int, prompt_type, add_example):
+def create_model_chain(args):
+    model_id = args.model_id
+    prompt_type = args.prompt_type
+    add_example = args.top_n > 0
+    speaker_characteristics = args.speaker_characteristics
+
     if model_id == 0:
         model = load_model_via_ollama()
     elif model_id == 1:
@@ -274,7 +312,7 @@ def create_model_chain(model_id: int, prompt_type, add_example):
         raise ValueError(f'The parameter model_id should one of the [0,1,2,3], but {model_id} was given')
 
 
-    prompt = get_prompt_template(prompt_type, add_example=add_example)
+    prompt = get_prompt_template(prompt_type, add_example=add_example, speaker_characteristics=speaker_characteristics)
 
     chain = prompt | model
     return chain, model, prompt
@@ -341,9 +379,7 @@ def main(config_dict=None):
         print(f"Arguments: {args}")
 
         # Load data
-        test_data, test_data_path = load_eval_data(
-            args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example, args.split
-        )
+        test_data, test_data_path = load_eval_data(args)
 
         path_to_save = rel_path_to_save_results(args)
         if args.save and check_path_exist_from_prefix(relative_path_from_project=path_to_save[:-5]):
@@ -351,7 +387,7 @@ def main(config_dict=None):
             return
 
         # Initialize model
-        chain, model, prompt = create_model_chain(args.model_id, args.prompt_type, add_example=args.top_n > 0)
+        chain, model, prompt = create_model_chain(args)
 
         # Run tests
         candidate_emotion_set = get_mapped_emotion_set(args.dataset)
