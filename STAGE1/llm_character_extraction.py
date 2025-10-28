@@ -273,6 +273,8 @@ def main(config_dict=None):
             args = argparse.Namespace(**config_dict)
 
         print(f"Arguments: {args}")
+        if args.splits is None:
+            args.splits = ["train", "dev", "test"]
 
         # Load data
         dataset = load_and_prepare_dataset(

@@ -285,20 +285,20 @@ Please output only the selected emotion label and make no explanation:
 
 
 
-SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE = """Now you are an expert who is good at using commonsense for reasoning.
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_NO_AUDIO = """Now you are an expert who is good at using commonsense for reasoning.
 The following conversation noted between ’### ###’ involves several speakers.
 ###
 {history}
 ###
-Based on the above historical utterances, please use commonsense to infer the reaction of potential listeners in < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >.
+Based on the above historical utterances, please use commonsense to infer the reaction of potential listeners in < "{speaker_id}" : "{utterance}" >.
 Output no more than 10 words:
 """
 
-SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT = PromptTemplate(
-    input_variables=["history", "speaker_id", "utterance", "audio_features"],
-    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance"],
+    template=SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE_NO_AUDIO
 )
-SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT"
+SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO.name = "SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO"
 
 
 SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE = """Now you are an expert who is good at using commonsense for reasoning.

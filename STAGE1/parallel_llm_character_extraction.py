@@ -1,6 +1,7 @@
 from prompts import (SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT,
                      SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1,
-                     SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2)
+                     SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2,
+                     SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO)
 from utils import (load_model_via_ollama, load_model_via_hf,
                    get_dataset_as_dataframe, set_pandas_display_options,
                    abstacted_audio_text, timing, check_path_exist_from_prefix, dump_json_test_result, makedirs)
@@ -63,7 +64,7 @@ def parse_arguments():
         "--prompt_type",
         type=str,
         default="default",
-        choices=["default", "alt1", "alt2"],
+        choices=["default", "alt1", "alt2", "default-no-audio"],
         help="Determine which prompt to use"
     )
     return parser.parse_args()
@@ -78,6 +79,8 @@ def get_prompt_template(prompt_type):
             return SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1
         case "alt2":
             return SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2
+        case "default-no-audio":
+            return SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO
         case _:
             raise ValueError(f"Unknown prompt type: {prompt_type}")
 
@@ -147,10 +150,12 @@ def create_history_context(conversation, turn_idx, max_k):
     return context.strip("\n")
 
 
-def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, exclude_na=False):
+def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, exclude_na=False, no_audio=False):
     columns_to_retrive = ["split", "dialog_idx", "turn_idx", "speaker", "utterance", "mapped_emotion", "idx", "intensity_level",
          "pitch_level", "rate_level"]
     df = get_dataset_as_dataframe(dataset_name, splits=splits, columns=columns_to_retrive)
+    if splits is None:
+        splits = ["train", "dev", "test"]
 
     if exclude_na:
         df["no_nan"] = (df.isna().sum(axis=1) == 0)
@@ -166,6 +171,7 @@ def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, 
 
     if limit is not None:
         df = df[:limit]
+
 
     df["abstracted_audio"] = df.apply(abstacted_audio_text, axis=1)
 
@@ -185,10 +191,14 @@ def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, 
                 history_context = create_history_context(df_conv, unit["turn_idx"], max_k)
                 speaker_id = unit["speaker"]
                 utterance = unit["utterance"]
-                audio_features = unit["abstracted_audio"]
-
-                inputs[split].append({"history": history_context, "utterance": utterance,
+                if no_audio:
+                    inputs[split].append({"history": history_context, "utterance": utterance,
+                                          "speaker_id": speaker_id})
+                else:
+                    audio_features = unit["abstracted_audio"]
+                    inputs[split].append({"history": history_context, "utterance": utterance,
                                       "audio_features": audio_features, "speaker_id": speaker_id})
+
                 emotions[split].append(unit["mapped_emotion"])
                 identifiers[split].append(idx)
 
@@ -200,10 +210,11 @@ def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, 
         ]
         data[split] = sub_data
 
+    print(f"example data: {data[splits[0]][0]}")
     return data
 
 
-CONCURRENCY_LIMIT = 20
+CONCURRENCY_LIMIT = 15
 
 
 async def process_data_point(data, chain, semaphore, prompt_template_str, verbose):
@@ -259,7 +270,7 @@ async def generate_characteristics_via_chain(chain, dataset, dataset_name, verbo
 
         processed_data = []
 
-        for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Processing {split}"):
+        for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Processing {split} split for dataset {dataset_name}"):
             data, verbose_output = await future
             processed_data.append(data)
 
@@ -281,7 +292,7 @@ async def generate_characteristics_via_chain(chain, dataset, dataset_name, verbo
 
 
 def rel_path_to_save_results(args, dataset):
-    split_text = "train-dev-test" if args.splits is None else "@".join(args.splits)
+    split_text = "train-dev-test" if args.splits is None else "-".join(args.splits)
     dataset_size = np.sum([len(dataset[split]) for split in dataset])
     folder = "STAGE1/data/"
     data_name = f"{args.dataset_name.upper()}-model{args.model_id}_{args.prompt_type}_k{args.max_k}_{split_text}_size{dataset_size}.json"
@@ -335,7 +346,7 @@ async def main(config_dict=None):
 
         # Load data
         dataset = load_and_prepare_dataset(
-            args.dataset_name, args.splits, args.limit
+            args.dataset_name, args.splits, args.limit, no_audio=("no-audio" in args.prompt_type)
         )
 
         path_to_save = rel_path_to_save_results(args, dataset)

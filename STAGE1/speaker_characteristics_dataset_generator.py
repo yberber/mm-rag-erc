@@ -10,14 +10,15 @@ from utils import get_vectordb_path_from_attributes
 import asyncio  # 1. Import asyncio
 
 datasets = ["iemocap", "meld"]
-prompt_types = ["default", "alt1", "alt2"]
+# prompt_types = ["default", "alt1", "alt2"]
+prompt_types = ["default-no-audio"]
 
 config = {
     'dataset_name': 'meld',
     'max_k': 20,
     'limit': None,
     'model_id': 2,
-    'splits': [ 'dev'],
+    'splits': ['dev'],
     'prompt_type': 'default'
 }
 
@@ -32,7 +33,14 @@ for dataset in datasets:
         config_list.append(temp_config)
 
 
-# for config in config_list:
+# config['prompt_type'] = 'default'
+# config['splits'] = None
+# for dataset in datasets:
+#     config['dataset_name'] = dataset
+#     config_list.append(config.copy())
+
+
+# for config in config_list[6:]:
 #     print(f"config: {config}")
 #     llm_character_extraction.main(config)
 #     print("*********************\n\n\n")
