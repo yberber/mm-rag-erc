@@ -37,8 +37,8 @@ def parse_arguments():
     )
     parser.add_argument(
         "--output_dir",
-        default="FINETUNING/PHASE1/",
         type=str,
+        default="FINETUNING/PHASE1/",
         required=False, # Changed to False as it can be provided via dict
         help="Directory to save the fine-tuned LoRA adapter and training checkpoints."
     )

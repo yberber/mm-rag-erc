@@ -101,8 +101,8 @@ def parse_arguments():
 
     parser.add_argument(
         "--experiment_id",
-        type=int,
-        choices=[1, 2, 3, 4, 5],
+        type=str,
+        # choices=[1, 2, 3, 4, 5],
         help="Determine where to save the results"
     )
 
@@ -296,6 +296,19 @@ def load_eval_data(args):
     return eval_data, eval_data_path
 
 
+def load_model_via_vertexai(model_id: str = "gemini-2.5-flash-lite", max_output_tokens: int = 10, disable_thinking = False):
+    from langchain_google_vertexai import VertexAI
+    if disable_thinking:
+        model_kwargs = {
+            "disable_thinking": True
+        }
+    else:
+        model_kwargs = {}
+    model = VertexAI(model=model_id, temperature=0, max_output_tokens=max_output_tokens, model_kwargs=model_kwargs)
+
+    model.name = f"{model_id} via VertexAI"
+    return model
+
 def create_model_chain(args):
     model_id = args.model_id
     prompt_type = args.prompt_type
@@ -306,10 +319,15 @@ def create_model_chain(args):
         model = load_model_via_ollama()
     elif model_id == 1:
         model = load_model_via_hf()
-    elif model_id == 2 or model_id == 3:
-        raise Exception(f"Model {model_id} is not implemented.")
+    elif model_id == 2:
+        model = load_model_via_vertexai("gemini-2.5-flash", max_output_tokens=1000, disable_thinking=True)
+    elif model_id == 3:
+        model = load_model_via_vertexai("gemini-2.5-flash-lite")
+
     else:
         raise ValueError(f'The parameter model_id should one of the [0,1,2,3], but {model_id} was given')
+
+    print(f"The model {model.name} was loaded!")
 
 
     prompt = get_prompt_template(prompt_type, add_example=add_example, speaker_characteristics=speaker_characteristics)
@@ -375,7 +393,9 @@ def main(config_dict=None):
         if config_dict is None:
             args = parse_arguments()
         else:
-            args = argparse.Namespace(**config_dict)
+            defaults = {"speaker_characteristics": None}
+            defaults.update(config_dict)
+            args = argparse.Namespace(**defaults)
         args.save = str2bool(args.save)
         args.use_detailed_example = str2bool(args.use_detailed_example)
 

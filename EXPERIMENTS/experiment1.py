@@ -8,11 +8,11 @@ config = {
     "max_m": 5,
     "use_detailed_example": True,
     "limit": None,
-    "model_id": 1,
+    "model_id": 3,
     "split": "dev",
     "save": True,
     "prompt_type": "default",
-    "experiment_id": 1
+    "experiment_id": "1b"
 }
 
 datasets = ["iemocap", "meld"]

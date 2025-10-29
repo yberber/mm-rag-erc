@@ -2,7 +2,7 @@
 Stage 1: Speaker Characteristics Extraction Fine-tuning with LoRA
 Fine-tunes Llama-3.1-8B-Instruct to extract speaker characteristics
 """
-
+import datasets.arrow_dataset
 import torch
 from transformers import (
     AutoTokenizer,
@@ -12,11 +12,14 @@ from transformers import (
     DataCollatorForLanguageModeling
 )
 from peft import LoraConfig, get_peft_model, TaskType
-from datasets import Dataset
+from datasets import Dataset, load_dataset
 import json
 from typing import List, Dict, Optional
 import os
 from dataclasses import dataclass
+import argparse
+
+import utils
 from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
 
 # ============================================================================
@@ -60,7 +63,7 @@ class Stage1DataProcessor:
         full_text = prompt + response + self.tokenizer.eos_token
         return full_text
 
-    def prepare_dataset(self, data: List[Dict]) -> Dataset:
+    def prepare_dataset(self, data: Dataset) -> Dataset:
         """
         Prepare HuggingFace Dataset from raw data
 
@@ -239,3 +242,222 @@ class Stage1Trainer:
         default_args.update(kwargs)
 
         return TrainingArguments(**default_args)
+
+    def train(self,
+              train_data: Dataset,
+              eval_data: Dataset,
+              output_dir: str = "./stage1_output",
+              **training_kwargs):
+        """
+        Train Stage 1 model
+
+        Args:
+            train_data: Training data
+            eval_data: Evaluation data
+            output_dir: Directory to save model
+            **training_kwargs: Additional training arguments
+
+        Returns:
+            Path to saved model
+        """
+        print("\n" + "=" * 80)
+        print("STARTING STAGE 1 TRAINING")
+        print("=" * 80)
+
+        # Load model
+        model = self.load_model()
+
+        # Prepare datasets
+        print("\nPreparing training dataset...")
+        processor = Stage1DataProcessor(self.tokenizer)
+        train_dataset = processor.prepare_dataset(train_data)
+
+        print("\nPreparing evaluation dataset...")
+        eval_dataset = processor.prepare_dataset(eval_data)
+
+        # Data collator
+        data_collator = DataCollatorForLanguageModeling(
+            tokenizer=self.tokenizer,
+            mlm=False  # We're doing causal LM, not masked LM
+        )
+
+        # Training arguments
+        training_args = self.get_training_arguments(output_dir, **training_kwargs)
+
+        print("\n" + "=" * 80)
+        print("Training Configuration:")
+        print(f"  Output directory: {training_args.output_dir}")
+        print(f"  Num epochs: {training_args.num_train_epochs}")
+        print(f"  Batch size per device: {training_args.per_device_train_batch_size}")
+        print(f"  Gradient accumulation: {training_args.gradient_accumulation_steps}")
+        print(
+            f"  Effective batch size: {training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps}")
+        print(f"  Learning rate: {training_args.learning_rate}")
+        print(f"  Training samples: {len(train_dataset)}")
+        print(f"  Evaluation samples: {len(eval_dataset)}")
+        print("=" * 80)
+
+        # Check for existing checkpoints for resumption
+        checkpoint = None
+        if os.path.isdir(output_dir):
+            checkpoints = [
+                os.path.join(output_dir, d)
+                for d in os.listdir(output_dir)
+                if d.startswith('checkpoint-')
+            ]
+            if checkpoints:
+                # Get the latest checkpoint
+                checkpoint = max(checkpoints, key=os.path.getctime)
+                print("\n" + "=" * 80)
+                print(f"FOUND EXISTING CHECKPOINT: {checkpoint}")
+                print("Resuming training from this checkpoint...")
+                print("=" * 80)
+
+        # Create trainer
+        trainer = Trainer(
+            model=model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            data_collator=data_collator,
+        )
+
+        # Train (with automatic resume if checkpoint exists)
+        if checkpoint:
+            print(f"\nResuming training from: {checkpoint}")
+            train_result = trainer.train(resume_from_checkpoint=checkpoint)
+        else:
+            print("\nStarting training from scratch...")
+            train_result = trainer.train()
+
+        # Save model
+        print("\n" + "=" * 80)
+        print("Training completed! Saving model...")
+        print("=" * 80)
+
+        trainer.save_model(output_dir)
+        self.tokenizer.save_pretrained(output_dir)
+
+        # Save training metrics
+        metrics = train_result.metrics
+        trainer.log_metrics("train", metrics)
+        trainer.save_metrics("train", metrics)
+        trainer.save_state()
+
+        print(f"\nModel saved to: {output_dir}")
+        print("\nFinal Training Metrics:")
+        for key, value in metrics.items():
+            print(f"  {key}: {value}")
+
+        # Evaluate
+        print("\nRunning final evaluation...")
+        eval_metrics = trainer.evaluate()
+        trainer.log_metrics("eval", eval_metrics)
+        trainer.save_metrics("eval", eval_metrics)
+
+        print("\nFinal Evaluation Metrics:")
+        for key, value in eval_metrics.items():
+            print(f"  {key}: {value}")
+
+        print("\n" + "=" * 80)
+        print("STAGE 1 TRAINING COMPLETE!")
+        print(f"Model saved to: {output_dir}")
+        print("You can now use this model for Stage 2 training")
+        print("=" * 80)
+
+        return output_dir
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Stage 1: Speaker Characteristics Fine-tuning')
+    parser.add_argument('--data_dir', type=str, default="TRAINING_DATA/PHASE1/IEMOCAP/", help='Path to Training data')
+    parser.add_argument('--output_dir', type=str, default='FINETUNING/PHASE1b/',
+                        help='Output directory for model')
+    parser.add_argument('--model_name', type=str,
+                        default='meta-llama/Llama-3.1-8B-Instruct',
+                        help='Base model name')
+    parser.add_argument('--epochs', type=int, default=3, help='Number of training epochs')
+    parser.add_argument('--batch_size', type=int, default=4, help='Batch size per device')
+    parser.add_argument('--learning_rate', type=float, default=2e-4, help='Learning rate')
+    parser.add_argument('--use_4bit', type=lambda x: str(x).lower() == 'true', help='Use 4-bit quantization')
+
+
+    args = parser.parse_args()
+    return args
+
+def load_iemocap_dataset():
+    data_path = os.path.join(utils.PROJECT_PATH, "TRAINING_DATA/PHASE1/IEMOCAP/")
+
+    data_files = {
+        "train": os.path.join(data_path, "train.jsonl"),
+        "dev": os.path.join(data_path, "dev.jsonl"),
+    }
+    raw_datasets = load_dataset("json", data_files=data_files)
+    return raw_datasets["train"], raw_datasets["dev"]
+
+# ============================================================================
+# Main Execution
+# ============================================================================
+
+def main(config_dict=None):
+
+    if config_dict is None:
+        print("Parsing arguments from command line...")
+        args = parse_arguments()
+    else:
+        print("Loading arguments from config_dict...")
+        defaults = {
+            "data_dir": "TRAINING_DATA/PHASE1/IEMOCAP/",
+            "output_dir": "FINETUNING/PHASE1b/",
+            "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+            "epochs": 3,
+            "batch_size": 4,
+            "learning_rate": 2e-4,
+            "use_4bit": True
+        }
+        defaults.update(config_dict)
+        args = argparse.Namespace(**defaults)
+
+    print("Effective Arguments:")
+    print(vars(args)) # Print the final arguments being used
+
+
+    args.data_dir = os.path.join(utils.PROJECT_PATH, args.data_dir)
+    args.output_dir = os.path.join(utils.PROJECT_PATH, args.output_dir)
+
+    # Load from directory structure (TRAINING_DATA/PHASE1/IEMOCAP/)
+    print(f"Loading data from directory: {args.data_dir}")
+    train_data, eval_data = load_iemocap_dataset()
+
+
+    print(f"\nLoaded {len(train_data)} training examples")
+    print(f"Loaded {len(eval_data)} evaluation examples")
+
+    # Initialize trainer
+    trainer = Stage1Trainer(
+        model_name=args.model_name,
+        use_4bit=args.use_4bit
+    )
+
+    # Train
+    output_path = trainer.train(
+        train_data=train_data,
+        eval_data=eval_data,
+        output_dir=args.output_dir,
+        num_train_epochs=args.epochs,
+        per_device_train_batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+    )
+
+    print("\n" + "=" * 80)
+    print("ALL DONE!")
+    print(f"Stage 1 model saved to: {output_path}")
+    print("\nNext steps:")
+    print(f"  1. Use the model at: {output_path}")
+    print("  2. Run Stage 2 training with this model as the base")
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    main()
+
+
