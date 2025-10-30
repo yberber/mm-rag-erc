@@ -9,8 +9,8 @@ import chromadb
 from glob import glob
 
 
-PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+# PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -261,7 +261,7 @@ def chdir_in_project(path):
 
 
 def get_idx_to_speaker_characteristics_hint(speaker_characteristics_type, dataset_name, split = "dev"):
-    if speaker_characteristics_type in ["default", "alt1" ,"alt2"] and split == "dev":
+    if speaker_characteristics_type in ["default", "alt1" ,"alt2", "default-no-audio"] and split == "dev":
         size = 1109 if dataset_name.upper() == "MELD" else 825
         data_from_model2 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model2_default_k20_{split}_size{size}.json")["dataset"]["dev"]
         data_from_model3 = load_json(relative_path_from_project=f"STAGE1/data/{dataset_name.upper()}-model3_default_k20_{split}_size{size}.json")["dataset"]["dev"]

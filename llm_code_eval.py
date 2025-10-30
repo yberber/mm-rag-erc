@@ -118,7 +118,7 @@ def parse_arguments():
         "--speaker_characteristics",
         type=str,
         default=None,
-        choices=[None, "default", "alt1", "alt2"],
+        choices=[None, "default", "alt1", "alt2", "default-no-audio"],
         help="Optionally, you can add the prompt speaker characteristics "
              "to the prompt as a hint. If None, it won't be added"
     )

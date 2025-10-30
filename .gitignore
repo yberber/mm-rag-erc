@@ -4,3 +4,6 @@
 */vectorstore_data/
 test.py
 vertexai_test.py
+comparison_results*.json
+wandb
+FINETUNING/

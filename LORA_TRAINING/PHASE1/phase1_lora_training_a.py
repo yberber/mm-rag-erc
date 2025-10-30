@@ -1,9 +1,20 @@
+# import sys
+# import os
+#
+# # Add the project root (the parent directory of this file's directory) to the Python path
+# project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# if project_root not in sys.path:
+#     sys.path.insert(0, project_root)
+
 
 import utils
 from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
 import argparse
 import os
 import torch # PyTorch for models and tensors
+
+
+
 
 # Hugging Face libraries
 from datasets import load_dataset # To load your .jsonl data
@@ -13,11 +24,14 @@ from transformers import (
     BitsAndBytesConfig,  # Configuration for 4-bit quantization (QLoRA) - needed if QLoRA is used
     TrainingArguments,   # Sets up all training parameters (epochs, lr, etc.)
     Trainer,             # Handles the actual training loop
+    DataCollatorForLanguageModeling,
+    DataCollatorForSeq2Seq,
+    EarlyStoppingCallback
 )
 # prepare_model_for_kbit_training - needed if QLoRA is used
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
-utils.chdir_in_project("LORA_TRAINING/")
+# utils.chdir_in_project("LORA_TRAINING/")
 
 def parse_arguments():
     """Parses command-line arguments."""
@@ -38,26 +52,26 @@ def parse_arguments():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="FINETUNING/PHASE1/",
+        default="FINETUNING/PHASE1A/",
         required=False, # Changed to False as it can be provided via dict
         help="Directory to save the fine-tuned LoRA adapter and training checkpoints."
     )
     parser.add_argument(
         "--use_qlora",
-        type=lambda x: str(x).lower() == 'true', # Allows bool parsing from command line
+        type=lambda x: (str(x).lower() in ['true', '1', 't']),  # Allows 'True', 'true', '1', etc.
         default=True,
         help="Set to False to use standard LoRA (16-bit) instead of QLoRA (4-bit)."
     )
     parser.add_argument(
         "--epochs",
         type=int,
-        default=3,
+        default=1,
         help="Number of training epochs."
     )
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=8,
+        default=4,
         help="Per-device batch size. LaERC-S used 8 for Phase 1."
     )
     parser.add_argument(
@@ -87,7 +101,7 @@ def parse_arguments():
     parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
-        default=2,
+        default=4,
         help="Number of steps to accumulate gradients before updating weights."
     )
     # Add other arguments if needed (e.g., warmup_ratio)
@@ -138,20 +152,23 @@ def load_and_prepare_data(tokenizer, max_seq_length):
         model_inputs = tokenizer(
             prompts_with_output,
             max_length=max_seq_length,
-            padding="max_length",
+            padding=False,
             truncation=True,
-            return_tensors="pt")
+            return_tensors=None
+            # return_tensors="pt"
+        )
+
 
         # 5. Create labels and mask the prompt
-        # We clone the input_ids_to create labels.
-        # We then mask the prompt tokens by setting them to -100
-        labels = model_inputs.input_ids.clone()
-        for i in range(len(labels)):
+        labels_list = []
+        for i in range(len(model_inputs.input_ids)):
+            labels = model_inputs.input_ids[i].copy()  # Get the list
             prompt_len = prompt_lengths[i]
             mask_len = min(prompt_len, max_seq_length)
-            labels[i, :mask_len] = -100
+            labels[:mask_len] = [-100] * mask_len
+            labels_list.append(labels)
 
-        model_inputs["labels"] = labels
+        model_inputs["labels"] = labels_list  # Add the list of labels
         return model_inputs
 
     # Apply tokenization
@@ -175,6 +192,7 @@ def main(config_dict=None):
     Main function to run the training process.
     Accepts an optional config_dict to override command-line arguments.
     """
+    print(f"{__file__} started!")
     if config_dict is None:
         # If no dict is provided, parse arguments from command line
         print("Parsing arguments from command line...")
@@ -222,6 +240,16 @@ def main(config_dict=None):
     # **Crucial for Llama:** Set pad token = eos token
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right" # Pad sequences on the right
+
+    # Use the efficient data collator that pads dynamically
+    # data_collator = DataCollatorForLanguageModeling(
+    #     tokenizer=tokenizer,
+    #     mlm=False  # Causal LM, not Masked LM
+    # )
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer=tokenizer,
+        padding="longest"  # This ensures dynamic padding
+    )
 
     # --- 5b. Load and Prepare Data ---
     # Call the function defined above
@@ -292,17 +320,26 @@ def main(config_dict=None):
         per_device_train_batch_size=args.batch_size, # Batch size per GPU (train)
         per_device_eval_batch_size=args.batch_size,  # Batch size per GPU (eval)
         learning_rate=args.learning_rate,    # Learning rate
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
 
         # Set optimizer based on whether QLoRA is used
         optim=optimizer_type,
 
+        # Logging settings
         logging_dir=f"{args.output_dir}/logs", # Directory for logs (TensorBoard)
         logging_strategy="steps",            # Log metrics every N steps
         logging_steps=10,                    # Log every 10 steps
-        evaluation_strategy="steps",         # Evaluate every N steps
-        eval_steps=100,                      # Evaluate every 100 steps
+
+        # Evaluation settings
+        eval_strategy="steps",               # Evaluate every N steps
+        eval_steps=200,                      # Evaluate every 200 steps
+
+        # Save settings
         save_strategy="steps",               # Save checkpoint every N steps
-        save_steps=100,                      # Save every 100 steps
+        save_steps=200,                      # Save every 100 steps
+        save_total_limit=3,                  # Keep only the 3 best checkpoints to save disk space
+
+        # Best model settings
         load_best_model_at_end=True,         # Load the best checkpoint at the end
         metric_for_best_model="eval_loss",   # Use validation loss to find the best model
         greater_is_better=False,             # Lower validation loss is better
@@ -310,9 +347,17 @@ def main(config_dict=None):
         # Use bf16 if *not* using QLoRA (QLoRA handles precision internally)
         bf16=(not args.use_qlora),
 
-        gradient_accumulation_steps=args.gradient_accumulation_steps, # Use value from args
-
+        # Reporting
         report_to="tensorboard",             # Log results to TensorBoard
+
+        # Reproducibility
+        seed=42,
+    )
+
+    # Initialize Early Stopping Callback
+    early_stopping = EarlyStoppingCallback(
+        early_stopping_patience=args.early_stopping_patience,
+        early_stopping_threshold=0.0  # Any improvement counts
     )
 
     # --- 5f. Initialize Trainer ---
@@ -323,11 +368,16 @@ def main(config_dict=None):
         train_dataset=tokenized_datasets["train"], # Training data
         eval_dataset=tokenized_datasets.get("dev"),  # Validation data (use .get to handle missing dev split)
         tokenizer=tokenizer,                 # Tokenizer (used for padding/saving)
+        data_collator=data_collator,
+        callbacks=[early_stopping]
+
     )
 
     # --- 5g. Start Training ---
-    print("Starting training...")
-    trainer.train() # This runs the main training loop
+    print("Starting training with early stopping...")
+    print(f"Early stopping patience: {args.early_stopping_patience} evaluation steps")
+    trainer.train()
+
 
     # --- 5h. Save Final Model ---
     # After training finishes, save the final trained LoRA adapter weights
@@ -342,27 +392,3 @@ if __name__ == "__main__":
     main()
 
 
-# model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-# token = ""
-
-# --- 1. Load Tokenizer ---
-# We use the Llama 3.1 tokenizer.
-# We MUST set the pad_token to be the eas_token
-# tokenizer = AutoTokenizer.from_pretrained(model_id, token=token)
-# tokenizer.pad_token = tokenizer.eos_token
-# tokenizer.padding_side = "right"
-#
-#
-# tokenized_datasets = load_and_prepare_data(tokenizer,
-#                                            max_seq_length=1536)
-
-# data = raw_datasets["test"][1]
-# p = SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE.format(**data["inputs"])
-# print(p)
-# t = tokenizer(p)
-
-# len(t["input_ids"]) == len(t["attention_mask"])
-# len(t)
-#
-# t2 = tokenizer(p, add_special_tokens=True)
-# t["input_ids"] == t2["input_ids"]

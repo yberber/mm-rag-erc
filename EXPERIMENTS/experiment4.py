@@ -37,3 +37,15 @@ for dataset in datasets:
 for config in config_list:
     llm_code_eval.main(config)
 
+
+
+config["experiment_id"] = "4b"
+config["speaker_characteristics"] = "default-no-audio"
+config_list.clear()
+for dataset in datasets:
+    c = config.copy()
+    c["dataset"] = dataset
+    config_list.append(c)
+
+for config in config_list:
+    llm_code_eval.main(config)

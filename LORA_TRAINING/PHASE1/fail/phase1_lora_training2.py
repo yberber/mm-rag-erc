@@ -20,8 +20,20 @@ from dataclasses import dataclass
 import argparse
 
 import utils
-from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
+# from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
 
+
+SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE = """Now you are an expert who is good at using commonsense for reasoning.
+The following conversation noted between ’### ###’ involves several speakers.
+###
+{history}
+###
+Based on the above historical utterances, please use commonsense to infer the reaction of potential listeners in < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >.
+Output no more than 10 words:
+"""
+
+import os
+os.environ["WANDB_PROJECT"] = "stage1-speaker-extraction"
 # ============================================================================
 # Data Preparation for Stage 1
 # ============================================================================
@@ -63,6 +75,7 @@ class Stage1DataProcessor:
         full_text = prompt + response + self.tokenizer.eos_token
         return full_text
 
+
     def prepare_dataset(self, data: Dataset) -> Dataset:
         """
         Prepare HuggingFace Dataset from raw data
@@ -82,7 +95,7 @@ class Stage1DataProcessor:
 
         formatted_texts = []
         for idx, item in enumerate(data):
-            if idx % 100 == 0:
+            if idx % 500 == 0:
                 print(f"  Processed {idx}/{len(data)} examples")
 
             text = self.format_training_example(
@@ -93,20 +106,30 @@ class Stage1DataProcessor:
 
         # Tokenize all texts
         print("Tokenizing...")
-        tokenized = self.tokenizer(
-            formatted_texts,
-            truncation=True,
-            padding=False,  # No padding during tokenization - will be padded dynamically in batches
-            max_length=self.max_length,
-            return_tensors=None
-        )
 
-        # Create labels (same as input_ids for causal LM)
-        tokenized['labels'] = tokenized['input_ids'].copy()
+        # Tokenize each example individually to avoid batching issues
+        all_input_ids = []
+        all_attention_masks = []
 
-        print(f"Dataset prepared with {len(tokenized['input_ids'])} examples")
+        for text in formatted_texts:
+            encoded = self.tokenizer(
+                text,
+                truncation=True,
+                max_length=self.max_length,
+                padding=False,
+                return_tensors=None
+            )
+            all_input_ids.append(encoded['input_ids'])
+            all_attention_masks.append(encoded['attention_mask'])
 
-        return Dataset.from_dict(tokenized)
+        print(f"Dataset prepared with {len(all_input_ids)} examples")
+
+        # Create dataset
+        return Dataset.from_dict({
+            'input_ids': all_input_ids,
+            'attention_mask': all_attention_masks,
+            # 'labels': all_labels
+        })
 
 
 # ============================================================================
@@ -200,6 +223,9 @@ class Stage1Trainer:
         lora_config = self.get_lora_config()
         model = get_peft_model(model, lora_config)
 
+        # Enable gradient checkpointing compatibility
+        model.enable_input_require_grads()
+
         # Print trainable parameters
         model.print_trainable_parameters()
 
@@ -223,15 +249,15 @@ class Stage1Trainer:
             "weight_decay": 0.01,
             "warmup_steps": 100,
             "logging_steps": 10,
-            "save_steps": 500,
-            "eval_steps": 500,
-            "evaluation_strategy": "steps",
+            "save_steps": 100,
+            "eval_steps": 100,
+            "eval_strategy": "steps",
             "save_strategy": "steps",
             "load_best_model_at_end": True,
             "metric_for_best_model": "eval_loss",
             "greater_is_better": False,
             "fp16": True,
-            "report_to": "none",  # Change to "wandb" for W&B logging
+            "report_to": ["wandb", "tensorboard"],
             "save_total_limit": 2,
             "logging_first_step": True,
             "gradient_checkpointing": True,
@@ -370,16 +396,19 @@ class Stage1Trainer:
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Stage 1: Speaker Characteristics Fine-tuning')
     parser.add_argument('--data_dir', type=str, default="TRAINING_DATA/PHASE1/IEMOCAP/", help='Path to Training data')
-    parser.add_argument('--output_dir', type=str, default='FINETUNING/PHASE1b/',
+    parser.add_argument('--output_dir', type=str, default='FINETUNING/PHASE1c/',
                         help='Output directory for model')
     parser.add_argument('--model_name', type=str,
                         default='meta-llama/Llama-3.1-8B-Instruct',
                         help='Base model name')
-    parser.add_argument('--epochs', type=int, default=3, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=1, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch size per device')
     parser.add_argument('--learning_rate', type=float, default=2e-4, help='Learning rate')
-    parser.add_argument('--use_4bit', type=lambda x: str(x).lower() == 'true', help='Use 4-bit quantization')
-
+    # parser.add_argument('--use_4bit', type=lambda x: str(x).lower() == 'true', help='Use 4-bit quantization')
+    parser.add_argument('--use_4bit',
+                        action=argparse.BooleanOptionalAction,
+                        default=False,
+                        help='Use 4-bit quantization (QLoRA). Default: True. Disable with --no-use_4bit')
 
     args = parser.parse_args()
     return args
