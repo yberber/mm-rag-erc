@@ -1,5 +1,5 @@
-# import sys
-# import os
+import sys
+import os
 #
 # # Add the project root (the parent directory of this file's directory) to the Python path
 # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -8,24 +8,30 @@
 
 
 import utils
-from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
+from prompts import EMOTION_RECOGNITION_FINAL_PROMPT
 import argparse
 import os
 import torch # PyTorch for models and tensors
+import data_process
 
-
+# TRAINING SET CONFIGS
+vectordb_path = utils.get_vectordb_path_from_attributes("hybrid", max_m=7)
+TRAINING_SET_CONFIGS = {"dataset": "iemocap", "max_k":20, "top_n":2, "split":["train", "dev"],
+          "vectordb_path": vectordb_path, "use_detailed_example": True,
+          "example_refinement_level": 1, "save_as": "no"}
 
 
 # Hugging Face libraries
-from datasets import load_dataset # To load your .jsonl data
+from datasets import load_dataset, DatasetDict, Dataset # To load your .jsonl data
 from transformers import (
     AutoModelForCausalLM, # Loads the Llama model
     AutoTokenizer,       # Loads the Llama tokenizer
     BitsAndBytesConfig,  # Configuration for 4-bit quantization (QLoRA) - needed if QLoRA is used
     TrainingArguments,   # Sets up all training parameters (epochs, lr, etc.)
     Trainer,             # Handles the actual training loop
+    DataCollatorForLanguageModeling,
+    DataCollatorForSeq2Seq,
     EarlyStoppingCallback
-
 )
 # prepare_model_for_kbit_training - needed if QLoRA is used
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
@@ -51,7 +57,7 @@ def parse_arguments():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="FINETUNING/PHASE1B/",
+        default="FINETUNING/PHASE1A/",
         required=False, # Changed to False as it can be provided via dict
         help="Directory to save the fine-tuned LoRA adapter and training checkpoints."
     )
@@ -110,21 +116,47 @@ def parse_arguments():
         default=3,
         help="Number of evaluation steps with no improvement before stopping."
     )
+
     # Add other arguments if needed (e.g., warmup_ratio)
     return parser.parse_args()
 
 
-def load_and_prepare_data(tokenizer, max_seq_length):
-    data_path = os.path.join(utils.PROJECT_PATH, "TRAINING_DATA/PHASE1/IEMOCAP/")
+def load_and_prepare_data(tokenizer, max_seq_length, configs):
+    assert configs["dataset"] in ["meld", "iemocap", "both"]
+    # which datasets to use
+    datasets_to_use = ["meld", "iemocap"] if configs["dataset"] == "both" else [configs["dataset"]]
 
-    data_files = {
-        "train": os.path.join(data_path, "train.jsonl"),
-        "dev": os.path.join(data_path, "dev.jsonl"),
-        "test": os.path.join(data_path, "test.jsonl")
-    }
+    # init collectors
+    training_set = {split: [] for split in configs["split"]}
 
-    print(f"Loading dta from {data_path}...")
-    raw_datasets = load_dataset("json", data_files=data_files)
+    for ds_name in datasets_to_use:
+        # build the per-dataset candidate emotions text
+        candidate_emotions = utils.get_mapped_emotion_set(ds_name)
+        candidate_emotions_text = ", ".join(candidate_emotions)
+
+        # run your preprocessing for this dataset
+        tmp_configs = {**configs, "dataset": ds_name}
+        processed_dataset = data_process.main(tmp_configs)  # dict: {"train": [...], "dev": [...]}
+
+        # transform + merge
+        for split in training_set.keys():
+            # (pure) transform: create new dicts, keep originals untouched
+            transformed = []
+            for ex in processed_dataset[split]:
+                inp = ex["input"].copy()
+                inp["candidate_emotions"] = candidate_emotions_text
+                transformed.append({
+                    "inputs": inp,  # renamed from "input"
+                    "output": ex["target"],
+                    # "idx": ex["idx"],
+                })
+            training_set[split].extend(transformed)
+
+    # build HF DatasetDict
+    raw_datasets = DatasetDict({
+        split: Dataset.from_list(training_set[split])
+        for split in training_set.keys()
+    })
 
 
     def tokenize_function(batch):
@@ -142,7 +174,7 @@ def load_and_prepare_data(tokenizer, max_seq_length):
         for i in range(len(outputs)):
 
             # 1. Format the prompt
-            prompt = SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE.format(**inputs_lists[i])
+            prompt = EMOTION_RECOGNITION_FINAL_PROMPT.format(**inputs_lists[i])
 
             # 2. Tokenize the prompt only to get its length
             # We add special tokens (like BOS) to get the tru starting length
@@ -158,20 +190,23 @@ def load_and_prepare_data(tokenizer, max_seq_length):
         model_inputs = tokenizer(
             prompts_with_output,
             max_length=max_seq_length,
-            padding="max_length",
+            padding=False,
             truncation=True,
-            return_tensors="pt")
+            return_tensors=None
+            # return_tensors="pt"
+        )
+
 
         # 5. Create labels and mask the prompt
-        # We clone the input_ids_to create labels.
-        # We then mask the prompt tokens by setting them to -100
-        labels = model_inputs.input_ids.clone()
-        for i in range(len(labels)):
+        labels_list = []
+        for i in range(len(model_inputs.input_ids)):
+            labels = model_inputs.input_ids[i].copy()  # Get the list
             prompt_len = prompt_lengths[i]
             mask_len = min(prompt_len, max_seq_length)
-            labels[i, :mask_len] = -100
+            labels[:mask_len] = [-100] * mask_len
+            labels_list.append(labels)
 
-        model_inputs["labels"] = labels
+        model_inputs["labels"] = labels_list  # Add the list of labels
         return model_inputs
 
     # Apply tokenization
@@ -188,6 +223,12 @@ def load_and_prepare_data(tokenizer, max_seq_length):
     return tokenized_datasets
 
 
+def get_path_to_save_results(args):
+    folder_path = (f"LORA_TRAINING/PHASE2/{args['dataset'].upper()}/k{args['max_k']}_{args['example_type']}"
+                   f"{'V2' if args['use_detailed_example'] and args['example_type'] in ['flow', 'hybrid'] else ''}"
+                   f"_n{args['top_n']}_m{args['max_m']}")
+    os.makedirs(folder_path, exist_ok=True)
+    return folder_path
 
 
 def main(config_dict=None):
@@ -203,8 +244,6 @@ def main(config_dict=None):
         # Check required args if parsing from command line
         # if not args.data_path:
         #     raise ValueError("--data_path is required when not providing a config_dict.")
-        if not args.output_dir:
-            raise ValueError("--output_dir is required when not providing a config_dict.")
     else:
         # If dict is provided, create args Namespace from it
         print("Loading arguments from config_dict...")
@@ -221,20 +260,18 @@ def main(config_dict=None):
             "lora_alpha": 32,
             "gradient_accumulation_steps": 2,
             # "data_path": None, # Ensure these exist even if None initially
-            "output_dir": "FINETUNING/PHASE1/"
+            "output_dir": None
         }
         # Update defaults with provided config_dict, overwriting if keys exist
         defaults.update(config_dict)
         args = argparse.Namespace(**defaults)
-        # Check required args if loading from dict
-        # if not args.data_path:
-        #     raise ValueError("data_path is required in the config_dict.")
-        if not args.output_dir:
-            raise ValueError("output_dir is required in the config_dict.")
+
 
     print("Effective Arguments:")
     print(vars(args)) # Print the final arguments being used
-    args.output_dir = os.path.join(utils.PROJECT_PATH, args.output_dir)
+    if args.output_dir is None:
+        args.output_dir = get_path_to_save_results(TRAINING_SET_CONFIGS)
+        args.output_dir = os.path.join(utils.PROJECT_PATH, args.output_dir)
 
 
     # --- 5a. Load Tokenizer ---
@@ -244,12 +281,18 @@ def main(config_dict=None):
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right" # Pad sequences on the right
 
+    # Use the efficient data collator that pads dynamically
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer=tokenizer,
+        padding="longest"  # This ensures dynamic padding
+    )
+
     # --- 5b. Load and Prepare Data ---
     # Call the function defined above
     tokenized_datasets = load_and_prepare_data(
-        # args.data_path,
         tokenizer,
-        args.max_seq_length
+        args.max_seq_length,
+        TRAINING_SET_CONFIGS
     )
 
     # --- 5c. Load Model (Conditional QLoRA or Standard LoRA) ---
@@ -325,11 +368,11 @@ def main(config_dict=None):
 
         # Evaluation settings
         eval_strategy="steps",               # Evaluate every N steps
-        eval_steps=100,                      # Evaluate every 100 steps
+        eval_steps=200,                      # Evaluate every 200 steps
 
         # Save settings
         save_strategy="steps",               # Save checkpoint every N steps
-        save_steps=100,                      # Save every 100 steps
+        save_steps=200,                      # Save every 100 steps
         save_total_limit=3,                  # Keep only the 3 best checkpoints to save disk space
 
         # Best model settings
@@ -361,6 +404,7 @@ def main(config_dict=None):
         train_dataset=tokenized_datasets["train"], # Training data
         eval_dataset=tokenized_datasets.get("dev"),  # Validation data (use .get to handle missing dev split)
         tokenizer=tokenizer,                 # Tokenizer (used for padding/saving)
+        data_collator=data_collator,
         callbacks=[early_stopping]
 
     )

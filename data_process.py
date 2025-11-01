@@ -9,13 +9,16 @@ import utils
 set_pandas_display_options()
 
 class DemonstrationCreatorViaCache:
-    def __init__(self, vectordb_path, top_n=1, use_detailed_example=False):
+    def __init__(self, vectordb_path, top_n=1, use_detailed_example=False, example_refinement_level=0, valid_emotion_set=None):
         path_splitted = str(vectordb_path).split("/")
         path_splitted[-2] = "caches"
 
         possible_cache_path = "/".join(path_splitted)
-        self.cache_data = load_json(path=str(possible_cache_path)+".json")
+        self.cache_data = load_json(relative_path_from_project=str(possible_cache_path)+".json")
         self.top_n = top_n
+
+        self.check_from_same_dataset = (example_refinement_level > 0)
+        self.valid_emotion_set = valid_emotion_set
 
         vectordb_name = str(vectordb_path).split("/")[-1]
         self.db_type = vectordb_name.split("_")[2]
@@ -40,7 +43,8 @@ class DemonstrationCreatorViaCache:
             start_idx = idx_prefix + "_" + str(max(0, idx_turn_id + 1 - self.max_m))
             demonstration_text = self.get_demonstration_text_for_n1(self.idx_to_speaker_utterance_emotion,
                                                                    ex_idx, start_idx, type=self.db_type,
-                                                                    use_detailed_example=self.use_detailed_example)
+                                                                    use_detailed_example=self.use_detailed_example,
+                                                                    valid_emotion_set=self.valid_emotion_set)
             final_demonstration_text.append(demonstration_text)
 
         if self.db_type == "single" or self.top_n <= 1:
@@ -58,12 +62,14 @@ class DemonstrationCreatorViaCache:
         top_n = []
         excluded_prefixes = set()
 
-        if idx is not None:
+        required_prefix = None
+        if self.check_from_same_dataset and idx is not None:
             excluded_prefixes.add(idx[:idx.rfind("_")])
+            required_prefix = idx.split("_")[0]
 
         for ex_idx in examples_idx:
             idx_prefix = ex_idx[:ex_idx.rfind("_")]
-            if idx_prefix not in excluded_prefixes:
+            if (idx_prefix not in excluded_prefixes) and (required_prefix is None or ex_idx.startswith(required_prefix)):
                 top_n.append(ex_idx)
                 if len(top_n) >= self.top_n:
                     break
@@ -74,10 +80,10 @@ class DemonstrationCreatorViaCache:
 
 
     def get_idx_to_speaker_utterance_emotion_df(self):
-        return load_dataframe_from_json("vectorstore/idx_to_speaker_utterance_emotion_df.json")
+        return load_dataframe_from_json(relative_path_from_project="vectorstore/idx_to_speaker_utterance_emotion_df.json")
 
     @staticmethod
-    def get_demonstration_text_for_n1(df, turn_idx_target, turn_idx_start=None, type="single", use_detailed_example=False):
+    def get_demonstration_text_for_n1(df, turn_idx_target, turn_idx_start=None, type="single", use_detailed_example=False, valid_emotion_set=None):
         if type == "single":
             row = df.loc[turn_idx_target]
             return f'< {row["utterance"]} : {row["mapped_emotion"]} >'
@@ -87,6 +93,8 @@ class DemonstrationCreatorViaCache:
             for _, row in df.iterrows():
                 line = f"{row['speaker']} : {row['utterance']}"
                 if use_detailed_example:
+                    if valid_emotion_set and row['mapped_emotion'] not in valid_emotion_set:
+                        continue
                     line += f" :-> {row['mapped_emotion']}"
                 page_content_lines.append(line)
             demonstration = "\n".join(page_content_lines)
@@ -154,27 +162,38 @@ def get_vectordb_instance(path_to_db):
 
 
 
+def process_split(split):
+    if split is None:
+        splits = ["train", "dev", "test"]
+    elif isinstance(split, list):
+        splits = split
+    elif isinstance(split, str):
+        splits = [split]
+    else:
+        raise ValueError(f"split must be either None or a list of strings, but got {split}")
+    return splits
 
-def process_dataset(dataset="meld", max_k=12, top_n=1, vectordb_path="vectorstore/vectorstore_db/meld_iemocap_single", split=None, use_detailed_example=False):
-
-    if isinstance(use_detailed_example, str):
-        if use_detailed_example.lower() == "true":
-            use_detailed_example = True
-        elif use_detailed_example.lower() == "false":
-            use_detailed_example = False
+def get_valid_emotion_set_for_examples(dataset, example_refinement_level):
+    valid_emotion_set_for_examples = None
+    if example_refinement_level == 2:
+        if dataset.lower() == "iemocap":
+            valid_emotion_set_for_examples = utils.iemocap_mapped_valid_emotion_set
+        elif dataset.lower() == "meld":
+            valid_emotion_set_for_examples = utils.meld_mapped_valid_emotion_set
         else:
-            raise ValueError(f"use_detailed_example must be either True or False, but got {use_detailed_example}")
+            raise ValueError(f"Unknown dataset: {dataset}")
+    return valid_emotion_set_for_examples
+
+def process_dataset(dataset="meld", max_k=12, top_n=1, vectordb_path="vectorstore/vectorstore_db/meld_iemocap_single", split=None, use_detailed_example=False, save_as="no", example_refinement_level=0):
+    demonstration_creator = DemonstrationCreatorViaCache(vectordb_path, top_n=top_n, use_detailed_example=use_detailed_example,
+                                                         example_refinement_level=example_refinement_level,
+                                                         valid_emotion_set=get_valid_emotion_set_for_examples(dataset, example_refinement_level))
+
+    splits = process_split(split)
+    df = get_dataset_as_dataframe(dataset, splits=splits)
 
 
-    demonstration_creator = DemonstrationCreatorViaCache(vectordb_path, top_n=top_n, use_detailed_example=use_detailed_example)
 
-
-
-    df = get_dataset_as_dataframe(dataset, splits=split)
-
-
-
-    splits = [split] if split else df["split"].unique().tolist()
 
     targets = {s: [] for s in splits}
     identifiers = {s: [] for s in splits}
@@ -217,17 +236,21 @@ def process_dataset(dataset="meld", max_k=12, top_n=1, vectordb_path="vectorstor
                 targets[split].append(target)
                 identifiers[split].append(idx)
 
-    data_path = f'PROCESSED_DATASET/{dataset.upper()}/k{max_k}_{demonstration_creator.get_id()}'
 
-    os.makedirs(data_path, exist_ok=True)
-    for split in splits:
-        data_to_save = list(zip(inputs[split], targets[split], identifiers[split]))
-        data_to_save = [{"input": x1, "target": x2, "idx" : x3} for (x1, x2, x3) in data_to_save]
-        utils.save_as_json(f"{data_path}/{split}.json", data_to_save)
-        # with open(f'{data_path}/{split}.json', 'w') as file:
-        #     for input, target, identifier in zip(inputs[split], targets[split], identifiers[split]):
-        #         file.write(json.dumps({'input': input, 'target': target, 'identifier': identifier}) + '\n')
-    print(f"Done.")
+    dataset = {
+        split: [{"input": x1, "target": x2, "idx": x3}
+                for x1, x2, x3 in zip(inputs[split], targets[split], identifiers[split])]
+        for split in splits
+    }
+    if save_as in ['json', 'jsonl']:
+        data_path = f'PROCESSED_DATASET/{dataset.upper()}/k{max_k}_{demonstration_creator.get_id()}'
+        os.makedirs(data_path, exist_ok=True)
+        if save_as == 'json':
+            utils.save_dataset_as_json(dataset, data_path)
+        else:
+            utils.save_dataset_as_jsonl(dataset, data_path)
+    return dataset
+
 
 def main(config_dict=None):
     if config_dict is None:
@@ -237,13 +260,23 @@ def main(config_dict=None):
         parser.add_argument("--top_n", type=int, default=1, help="Number of utterance-emotion samples to retrieve for each llm input")
         parser.add_argument("--vectordb_path", type=str, default="vectorstore/vectorstore_db/meld_iemocap_single", help="Path to the vector database")
         parser.add_argument("--split", type=str, default=None, help="Choose the split to process of the dataset between train, test, and dev. Default is None which processes all splits")
-        parser.add_argument("--use_detailed_example", type=str, default="False", help="Map each utterance in example to an emotion if true for the examples from flow or hybrid db")
+        parser.add_argument("--use_detailed_example", type=lambda x: (str(x).lower() in ['true', '1', 't']), default=False, help="Map each utterance in example to an emotion if true for the examples from flow or hybrid db")
+        parser.add_argument("--example_refinement_level", type=int, default=0, choices=[0,1,2], help="if 0, no refinement. If 1, retrieve examples from the same dataset. If 2, retrieve examples from the same dataset and all mapped emotions in the demonstration is in the valid emotions for the given dataset")
+        parser.add_argument("--save_as", type=str, default="no", choices=["json", "jsonl", "no"], help="Save the processed data as json or jsonl. If no, do not save the data and return it.")
         args = parser.parse_args()
     else:
-        args = argparse.Namespace(**config_dict)
+        defaults = {
+            "split": "dev",
+            "use_detailed_example": False,
+            "example_refinement_level": 0,
+            "save_as": "no"
+        }
+        defaults.update(config_dict)
+        args = argparse.Namespace(**defaults)
 
-    process_dataset(dataset=args.dataset, max_k=args.max_k, top_n=args.top_n, vectordb_path=args.vectordb_path,
-                    split=args.split, use_detailed_example=str2bool(args.use_detailed_example))
+    return process_dataset(dataset=args.dataset, max_k=args.max_k, top_n=args.top_n, vectordb_path=args.vectordb_path,
+                    split=args.split, use_detailed_example=args.use_detailed_example, save_as=args.save_as,
+                           example_refinement_level=args.example_refinement_level)
 
 if __name__ == '__main__':
     main()

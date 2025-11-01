@@ -104,6 +104,14 @@ def parse_arguments():
         default=4,
         help="Number of steps to accumulate gradients before updating weights."
     )
+
+    parser.add_argument(
+        "--early_stopping_patience",
+        type=int,
+        default=3,
+        help="Number of evaluation steps with no improvement before stopping."
+    )
+
     # Add other arguments if needed (e.g., warmup_ratio)
     return parser.parse_args()
 
@@ -242,10 +250,10 @@ def main(config_dict=None):
     tokenizer.padding_side = "right" # Pad sequences on the right
 
     # Use the efficient data collator that pads dynamically
-    # data_collator = DataCollatorForLanguageModeling(
-    #     tokenizer=tokenizer,
-    #     mlm=False  # Causal LM, not Masked LM
-    # )
+    data_collator = DataCollatorForLanguageModeling(
+        tokenizer=tokenizer,
+        mlm=False  # Causal LM, not Masked LM
+    )
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         padding="longest"  # This ensures dynamic padding

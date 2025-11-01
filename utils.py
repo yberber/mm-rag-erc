@@ -9,8 +9,8 @@ import chromadb
 from glob import glob
 
 
-# PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -158,6 +158,19 @@ def save_as_json(path, data):
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4)
     print(f"Saved data to {path}")
+
+def save_dataset_as_json(path, dataset):
+    for split, data in dataset.items():
+        with open(f"{path}/{split}.jsonl", 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4)
+    print(f"Saved dataset to {path}")
+
+
+def save_dataset_as_jsonl(path, dataset):
+    for split, data in dataset.items():
+        with open(f"{path}/{split}.jsonl", "w", encoding="utf-8") as f:
+            for entry in data:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def save_dataframe_as_json(path, df, orient="index"):
