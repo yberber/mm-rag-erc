@@ -9,8 +9,8 @@ import chromadb
 from glob import glob
 
 
-PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+# PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -75,14 +75,14 @@ emotion_mapper_union.update(iemocap_emotion_mapper)
 emotion_set = ['joyful', 'sad', 'neutral', 'angry', 'excited', 'surprised', 'frustrated', 'fearful', 'disgusted']
 
 def get_mapped_emotion_set(dataset=None):
-    if dataset is None:
+    if dataset is None or dataset.lower() == 'both':
         return emotion_set
     elif dataset.lower() == 'meld':
         return meld_emotion_set_mapped
     elif dataset.lower() == 'iemocap':
         return iemocap_emotion_set_mapped
     else:
-        raise ValueError('Dataset must be either None, or "meld" or "iemocap"')
+        raise ValueError('Dataset must be either None, or "both", or "meld" or "iemocap"')
 
 from enum import Enum
 class EmotionExtractionStrategy(Enum):

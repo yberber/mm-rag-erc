@@ -1,5 +1,4 @@
 import argparse
-from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from tqdm import tqdm
 import os
@@ -152,6 +151,7 @@ def create_history_context(conversation, current_utterance_idx, max_k):
 
 
 def get_vectordb_instance(path_to_db):
+    from langchain_chroma import Chroma
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector_db = Chroma(
         collection_name=str(path_to_db).split("/")[-1],

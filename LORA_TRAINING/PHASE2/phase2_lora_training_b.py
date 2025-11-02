@@ -15,6 +15,9 @@ import torch # PyTorch for models and tensors
 import data_process
 
 
+import os
+os.environ["WANDB_PROJECT"] = "stage2-emotion-recognition-b"
+
 # TRAINING SET CONFIGS
 vectordb_path = utils.get_vectordb_path_from_attributes("hybrid", max_m=7)
 TRAINING_SET_CONFIGS = {"dataset": "iemocap", "max_k":20, "top_n":2, "split":["train", "dev"],
@@ -58,7 +61,7 @@ def parse_arguments():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="FINETUNING/PHASE2A/",
+        default="FINETUNING/PHASE2B/",
         required=False, # Changed to False as it can be provided via dict
         help="Directory to save the fine-tuned LoRA adapter and training checkpoints."
     )
@@ -159,6 +162,12 @@ def load_and_prepare_data(tokenizer, max_seq_length, configs):
         for split in training_set.keys()
     })
 
+    # 🔀 Shuffle each split
+    raw_datasets = DatasetDict({
+        split: raw_datasets[split].shuffle(seed=42)
+        for split in raw_datasets.keys()
+    })
+
 
     def tokenize_function(batch):
         """
@@ -191,23 +200,21 @@ def load_and_prepare_data(tokenizer, max_seq_length, configs):
         model_inputs = tokenizer(
             prompts_with_output,
             max_length=max_seq_length,
-            padding=False,
+            padding="max_length",
             truncation=True,
-            return_tensors=None
-            # return_tensors="pt"
-        )
+            return_tensors="pt")
 
 
         # 5. Create labels and mask the prompt
-        labels_list = []
-        for i in range(len(model_inputs.input_ids)):
-            labels = model_inputs.input_ids[i].copy()  # Get the list
+        # We clone the input_ids_to create labels.
+        # We then mask the prompt tokens by setting them to -100
+        labels = model_inputs.input_ids.clone()
+        for i in range(len(labels)):
             prompt_len = prompt_lengths[i]
             mask_len = min(prompt_len, max_seq_length)
-            labels[:mask_len] = [-100] * mask_len
-            labels_list.append(labels)
+            labels[i, :mask_len] = -100
 
-        model_inputs["labels"] = labels_list  # Add the list of labels
+        model_inputs["labels"] = labels
         return model_inputs
 
     # Apply tokenization
@@ -281,12 +288,6 @@ def main(config_dict=None):
     # **Crucial for Llama:** Set pad token = eos token
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right" # Pad sequences on the right
-
-    # Use the efficient data collator that pads dynamically
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer=tokenizer,
-        padding="longest"  # This ensures dynamic padding
-    )
 
     # --- 5b. Load and Prepare Data ---
     # Call the function defined above
@@ -374,7 +375,7 @@ def main(config_dict=None):
         # Save settings
         save_strategy="steps",               # Save checkpoint every N steps
         save_steps=50,                      # Save every 100 steps
-        save_total_limit=3,                  # Keep only the 3 best checkpoints to save disk space
+        # save_total_limit=3,                  # Keep only the 3 best checkpoints to save disk space
 
         # Best model settings
         load_best_model_at_end=True,         # Load the best checkpoint at the end
@@ -385,17 +386,18 @@ def main(config_dict=None):
         bf16=(not args.use_qlora),
 
         # Reporting
-        report_to="tensorboard",             # Log results to TensorBoard
+        # report_to="tensorboard",             # Log results to TensorBoard
+        report_to=["wandb", "tensorboard"],  # Log results to TensorBoard
 
         # Reproducibility
         seed=42,
     )
 
-    # Initialize Early Stopping Callback
-    early_stopping = EarlyStoppingCallback(
-        early_stopping_patience=args.early_stopping_patience,
-        early_stopping_threshold=0.0  # Any improvement counts
-    )
+    # # Initialize Early Stopping Callback
+    # early_stopping = EarlyStoppingCallback(
+    #     early_stopping_patience=args.early_stopping_patience,
+    #     early_stopping_threshold=0.0  # Any improvement counts
+    # )
 
     # --- 5f. Initialize Trainer ---
     # Create the Trainer object, which orchestrates the training loop
@@ -405,16 +407,15 @@ def main(config_dict=None):
         train_dataset=tokenized_datasets["train"], # Training data
         eval_dataset=tokenized_datasets.get("dev"),  # Validation data (use .get to handle missing dev split)
         tokenizer=tokenizer,                 # Tokenizer (used for padding/saving)
-        data_collator=data_collator,
-        callbacks=[early_stopping]
+        # callbacks=[early_stopping]
 
     )
 
     # --- 5g. Start Training ---
-    print("Starting training with early stopping...")
-    print(f"Early stopping patience: {args.early_stopping_patience} evaluation steps")
-    trainer.train()
-
+    print("Starting training without early stopping...")
+    # print(f"Early stopping patience: {args.early_stopping_patience} evaluation steps")
+    # trainer.train()
+    trainer.train(resume_from_checkpoint=True)
 
     # --- 5h. Save Final Model ---
     # After training finishes, save the final trained LoRA adapter weights
