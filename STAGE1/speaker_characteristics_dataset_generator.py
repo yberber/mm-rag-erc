@@ -3,22 +3,21 @@
 
 
 
-import llm_character_extraction
-import parallel_llm_character_extraction
+from STAGE1 import llm_character_extraction, parallel_llm_character_extraction
 
 from utils import get_vectordb_path_from_attributes
 import asyncio  # 1. Import asyncio
 
-datasets = ["iemocap", "meld"]
+datasets = ["meld"]
 # prompt_types = ["default", "alt1", "alt2"]
 prompt_types = ["default-no-audio"]
 
 config = {
-    'dataset_name': 'meld',
+    'dataset_name': ['meld', 'iemocap'],
     'max_k': 20,
     'limit': None,
     'model_id': 2,
-    'splits': ['dev'],
+    'splits': ['train','dev'],
     'prompt_type': 'default'
 }
 
