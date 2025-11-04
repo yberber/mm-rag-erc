@@ -30,7 +30,6 @@ from transformers import (
     BitsAndBytesConfig,  # Configuration for 4-bit quantization (QLoRA) - needed if QLoRA is used
     TrainingArguments,   # Sets up all training parameters (epochs, lr, etc.)
     Trainer,             # Handles the actual training loop
-    DataCollatorForLanguageModeling,
     DataCollatorForSeq2Seq,
     EarlyStoppingCallback
 )
@@ -138,6 +137,7 @@ def load_and_prepare_data(tokenizer, max_seq_length, configs):
         # run your preprocessing for this dataset
         tmp_configs = {**configs, "dataset": ds_name}
         processed_dataset = data_process.main(tmp_configs)  # dict: {"train": [...], "dev": [...]}
+
 
         # transform + merge
         for split in training_set.keys():
@@ -413,7 +413,8 @@ def main(config_dict=None):
     # --- 5g. Start Training ---
     print("Starting training with early stopping...")
     print(f"Early stopping patience: {args.early_stopping_patience} evaluation steps")
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True)
+
 
 
     # --- 5h. Save Final Model ---

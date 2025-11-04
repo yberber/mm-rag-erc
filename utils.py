@@ -8,9 +8,10 @@ import re
 import chromadb
 from glob import glob
 
-
+project_root_folder = "/LLM-for-ERC"
+PROJECT_PATH = os.getcwd()[:os.getcwd().find(project_root_folder) + len(project_root_folder)]
 # PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
-PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
+# PROJECT_PATH = "/gpfs/bwfor/home/hd/hd_hd/hd_ux323/LLM-for-ERC"
 
 def set_pandas_display_options():
     # Permanently changes the pandas settings
@@ -294,6 +295,22 @@ def get_idx_to_speaker_characteristics_hint(speaker_characteristics_type, datase
         raise ValueError(f"Unknown speaker characteristics type: {speaker_characteristics_type}")
 
 
+def get_stage1_training_set(dataset_name, splits=None):
+
+    if dataset_name.lower() == "meld":
+        file_name = "MELD-model2_default_k20_train-dev_size11098.json"
+    elif dataset_name.lower() == "iemocap":
+        file_name = "IEMOCAP-model2_default_k20_train-dev-test_size10039.json"
+    else:
+        raise ValueError("Invalid dataset name")
+    dataset = load_json(relative_path_from_project=f"TRAINING_DATA_CREATE/STAGE1/data/{file_name}")["dataset"]
+    if splits:
+        return [dataset[split] for split in splits]
+
+    return dataset
+
+
+
 
 def get_dataset_as_dataframe(dataset_name, splits=None, columns=None):
     if dataset_name.lower() == "meld":
@@ -325,21 +342,32 @@ def get_dataset_as_dataframe(dataset_name, splits=None, columns=None):
     raise Exception('splits must be either None, or str, or a non-empty list')
 
 
-def get_meld_iemocap_datasets_as_dataframe(splits=None):
+def get_meld_iemocap_datasets_as_dataframe(splits=None, return_only_dataset=None):
     meld_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "meld_erc_with_categories.csv")
     iemocap_path = os.path.join(PROJECT_PATH, "BENCMARK_DATASETS", "iemocap_erc_with_categories.csv")
     meld_df = pd.read_csv(meld_path)
     iemocap_df = pd.read_csv(iemocap_path)
-    if splits is None:
-        return meld_df, iemocap_df
 
     if type(splits) is str:
-        return meld_df[meld_df['split']==splits], iemocap_df[iemocap_df['split'] == splits]
+        meld_df = meld_df[meld_df['split']==splits]
+        iemocap_df = iemocap_df[iemocap_df['split'] == splits]
 
-    if type(splits) is list and len(splits):
-        return meld_df[meld_df['split'].isin(splits)], iemocap_df[iemocap_df['split'].isin(splits)]
+    elif type(splits) is list and len(splits):
+        meld_df = meld_df[meld_df['split'].isin(splits)]
+        iemocap_df = iemocap_df[iemocap_df['split'].isin(splits)]
 
-    raise Exception('splits must be either None, or str, or a non-empty list')
+    elif splits is not None:
+        raise Exception('splits must be either None, or str, or a non-empty list')
+
+    if return_only_dataset:
+        if return_only_dataset.lower() == "meld":
+            return meld_df
+        elif return_only_dataset.lower() == "iemocap":
+            return iemocap_df
+
+    return meld_df, iemocap_df
+
+
 
 
 def get_vectordb_path_from_attributes(db_type: str, max_m: int = None):

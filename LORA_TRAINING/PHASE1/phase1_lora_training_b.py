@@ -1,19 +1,8 @@
-# import sys
-# import os
-#
-# # Add the project root (the parent directory of this file's directory) to the Python path
-# project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-# if project_root not in sys.path:
-#     sys.path.insert(0, project_root)
-
-
 import utils
 from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE
 import argparse
 import os
 import torch # PyTorch for models and tensors
-
-
 
 
 # Hugging Face libraries
@@ -25,12 +14,8 @@ from transformers import (
     TrainingArguments,   # Sets up all training parameters (epochs, lr, etc.)
     Trainer,             # Handles the actual training loop
     EarlyStoppingCallback
-
 )
-# prepare_model_for_kbit_training - needed if QLoRA is used
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-
-# utils.chdir_in_project("LORA_TRAINING/")
 
 def parse_arguments():
     """Parses command-line arguments."""

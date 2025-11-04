@@ -33,9 +33,6 @@ from transformers import (
     BitsAndBytesConfig,  # Configuration for 4-bit quantization (QLoRA) - needed if QLoRA is used
     TrainingArguments,   # Sets up all training parameters (epochs, lr, etc.)
     Trainer,             # Handles the actual training loop
-    DataCollatorForLanguageModeling,
-    DataCollatorForSeq2Seq,
-    EarlyStoppingCallback
 )
 # prepare_model_for_kbit_training - needed if QLoRA is used
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
