@@ -5,6 +5,8 @@ from LORA_TRAINING.training_helper import BaseTrainer
 from datasets import DatasetDict, Dataset
 
 
+os.environ["WANDB_PROJECT"] = "stage1-speaker-extraction"
+
 class Phase1Trainer(BaseTrainer):
     """
     Trainer for Phase 1: Speaker Characteristic Injection Fine-Tuning.

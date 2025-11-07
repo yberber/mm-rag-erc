@@ -48,7 +48,7 @@ def get_base_parser():
                         help="Number of steps to accumulate gradients before updating weights.")
     parser.add_argument("--early_stopping_patience", type=int, default=3,
                         help="Number of evaluation steps with no improvement before stopping.")
-    parser.add_argument("--weight_decay", type=float, default=None, help="Weight decay for AdamW.")
+    parser.add_argument("--weight_decay", type=float, default=0, help="Weight decay for AdamW.")
     parser.add_argument("--warmup_ratio", type=float, default=0.1,
                         help="Warmup ratio for learning rate scheduler.")
     parser.add_argument("--eval_save_steps", type=int, default=150, help="Evaluation and save steps.")
@@ -444,7 +444,7 @@ class BaseTrainer:
             greater_is_better=False,
 
             bf16=(not self.config.use_qlora),
-            report_to="tensorboard",
+            report_to=["wandb", "tensorboard"],
             seed=self.config.seed,
 
         )
@@ -488,12 +488,47 @@ class BaseTrainer:
                 print("If you want to re-train, please delete this folder or change --output_dir.")
                 return
 
-            # Automatically resume from the latest step checkpoint in output_dir if it exists
-            self.trainer.train(resume_from_checkpoint=True)
+            # Check for existing checkpoints for resumption
+            checkpoint = None
+            if os.path.isdir(self.config.output_dir):
+                checkpoints = [
+                    os.path.join(self.config.output_dir, d)
+                    for d in os.listdir(self.config.output_dir)
+                    if d.startswith('checkpoint-')
+                ]
+                if checkpoints:
+                    # Get the latest checkpoint
+                    checkpoint = max(checkpoints, key=os.path.getctime)
+                    print("\n" + "=" * 80)
+                    print(f"FOUND EXISTING CHECKPOINT: {checkpoint}")
+                    print("Resuming training from this checkpoint...")
+                    print("=" * 80)
 
-            print(f"Training complete. Saving final adapter to {final_checkpoint_dir}")
+            # Train (with automatic resume if checkpoint exists)
+            if checkpoint:
+                print(f"\nResuming training from: {checkpoint}")
+                train_result = self.trainer.train(resume_from_checkpoint=checkpoint)
+            else:
+                print("\nStarting training from scratch...")
+                train_result = self.trainer.train()
+
+            # ----- Save metrics and trainer state -----
+            print("\nCollecting and saving training metrics and state...")
+            metrics = train_result.metrics
+            # Log to console / integrated loggers (e.g., wandb, tensorboard)
+            self.trainer.log_metrics("train", metrics)
+            # Save metrics to JSON in output_dir (e.g., train_results.json)
+            self.trainer.save_metrics("train", metrics)
+            # Save full trainer state (optimizer, scheduler, rng, trainer_state.json, etc.)
+            self.trainer.save_state()
+
+            # ----- Save final model (for inference / later phases) -----
+            print(f"\nTraining complete. Saving final adapter to {final_checkpoint_dir}")
+            os.makedirs(final_checkpoint_dir, exist_ok=True)
             self.trainer.save_model(final_checkpoint_dir)
-            self.save_config(final_checkpoint_dir)  # Save the config
+            self.save_config(final_checkpoint_dir)
+
+            print(f"{self.phase_name} finished successfully.")
 
             print(f"{self.phase_name} finished successfully.")
 

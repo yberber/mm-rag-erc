@@ -25,9 +25,12 @@ class Phase2Trainer(BaseTrainer):
         to Phase 2 training.
         """
         return {
-            "dataset": "both",
+            "dataset": "iemocap",
+            # "use_qlora": False,
             "iemocap_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/IEMOCAP/",
-            "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/"
+            "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/",
+            # "batch_size": 2,
+            # "gradient_accumulation_steps": 8
         }
 
 

@@ -28,13 +28,13 @@ k_values = [0, 1, 3, 5, 7, 10, 12, 15, 17, 20]
 
 config_list = []
 
-# for dataset in datasets:
-#     for k in k_values:
-#         c = get_updated_config(config, dataset, k)
-#         config_list.append(c)
-#
-# for config in config_list:
-#     llm_code_eval.main(config)
+for dataset in datasets:
+    for k in k_values:
+        c = get_updated_config(config, dataset, k)
+        config_list.append(c)
+
+for config in config_list:
+    llm_code_eval.main(config)
 
 
 
