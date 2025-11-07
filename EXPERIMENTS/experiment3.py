@@ -36,3 +36,20 @@ for dataset in datasets:
 for config in config_list:
     llm_code_eval.main(config)
 
+
+
+
+print("=" * 80)
+print(f"Start with Experiment 3b")
+config["experiment_id"] = "3b"
+config['exclude_current_from_history'] = True
+datasets = ["iemocap", "meld"]
+k_values = [1, 7, 12, 20]
+
+for dataset in datasets:
+    for k in k_values:
+        c = get_updated_config(config, dataset, k)
+        config_list.append(c)
+for config in config_list:
+    llm_code_eval.main(config)
+

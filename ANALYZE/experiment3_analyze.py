@@ -19,4 +19,6 @@ for test_path in glob("../EVAL_RESULTS/Experiment3/*.json"):
 
 df = pd.DataFrame.from_dict(results, orient="index")
 df.sort_index(inplace=True, axis=1)
-df.loc["total"] = (df.loc["meld"] + df.loc["iemocap"]) / 2
+df.loc["averaged"] = (df.loc["meld"] + df.loc["iemocap"]) / 2
+df.columns.name = "k"
+df

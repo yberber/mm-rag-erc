@@ -1,0 +1,90 @@
+{
+    "meld_iemocap_flow_10": {
+        "MELD_F1_@1": 0.3295,
+        "IEMOCAP_F1_@1": 0.5043,
+        "MELD_F1_@2": 0.3099,
+        "IEMOCAP_F1_@2": 0.5085,
+        "MELD_F1_@3": 0.3247,
+        "IEMOCAP_F1_@3": 0.4943
+    },
+    "meld_iemocap_flow_12": {
+        "MELD_F1_@1": 0.3231,
+        "IEMOCAP_F1_@1": 0.4816,
+        "MELD_F1_@2": 0.3007,
+        "IEMOCAP_F1_@2": 0.4894,
+        "MELD_F1_@3": 0.3301,
+        "IEMOCAP_F1_@3": 0.5122
+    },
+    "meld_iemocap_flow_3": {
+        "MELD_F1_@1": 0.416,
+        "IEMOCAP_F1_@1": 0.5256,
+        "MELD_F1_@2": 0.3767,
+        "IEMOCAP_F1_@2": 0.4841,
+        "MELD_F1_@3": 0.3781,
+        "IEMOCAP_F1_@3": 0.524
+    },
+    "meld_iemocap_flow_5": {
+        "MELD_F1_@1": 0.3479,
+        "IEMOCAP_F1_@1": 0.4757,
+        "MELD_F1_@2": 0.3311,
+        "IEMOCAP_F1_@2": 0.4598,
+        "MELD_F1_@3": 0.3215,
+        "IEMOCAP_F1_@3": 0.5015
+    },
+    "meld_iemocap_flow_7": {
+        "MELD_F1_@1": 0.3405,
+        "IEMOCAP_F1_@1": 0.4954,
+        "MELD_F1_@2": 0.325,
+        "IEMOCAP_F1_@2": 0.4741,
+        "MELD_F1_@3": 0.3224,
+        "IEMOCAP_F1_@3": 0.4768
+    },
+    "meld_iemocap_hybrid_10": {
+        "MELD_F1_@1": 0.3231,
+        "IEMOCAP_F1_@1": 0.5073,
+        "MELD_F1_@2": 0.3379,
+        "IEMOCAP_F1_@2": 0.4888,
+        "MELD_F1_@3": 0.3249,
+        "IEMOCAP_F1_@3": 0.5305
+    },
+    "meld_iemocap_hybrid_12": {
+        "MELD_F1_@1": 0.3242,
+        "IEMOCAP_F1_@1": 0.4677,
+        "MELD_F1_@2": 0.3363,
+        "IEMOCAP_F1_@2": 0.5004,
+        "MELD_F1_@3": 0.3391,
+        "IEMOCAP_F1_@3": 0.4964
+    },
+    "meld_iemocap_hybrid_3": {
+        "MELD_F1_@1": 0.403,
+        "IEMOCAP_F1_@1": 0.5431,
+        "MELD_F1_@2": 0.3615,
+        "IEMOCAP_F1_@2": 0.5018,
+        "MELD_F1_@3": 0.382,
+        "IEMOCAP_F1_@3": 0.5267
+    },
+    "meld_iemocap_hybrid_5": {
+        "MELD_F1_@1": 0.3282,
+        "IEMOCAP_F1_@1": 0.4854,
+        "MELD_F1_@2": 0.3333,
+        "IEMOCAP_F1_@2": 0.4991,
+        "MELD_F1_@3": 0.3421,
+        "IEMOCAP_F1_@3": 0.5078
+    },
+    "meld_iemocap_hybrid_7": {
+        "MELD_F1_@1": 0.3325,
+        "IEMOCAP_F1_@1": 0.4916,
+        "MELD_F1_@2": 0.3112,
+        "IEMOCAP_F1_@2": 0.4779,
+        "MELD_F1_@3": 0.3149,
+        "IEMOCAP_F1_@3": 0.4925
+    },
+    "meld_iemocap_single": {
+        "MELD_F1_@1": 0.4084,
+        "IEMOCAP_F1_@1": 0.4872,
+        "MELD_F1_@2": 0.3986,
+        "IEMOCAP_F1_@2": 0.4811,
+        "MELD_F1_@3": 0.3667,
+        "IEMOCAP_F1_@3": 0.4416
+    }
+}

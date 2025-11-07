@@ -19,7 +19,8 @@ from utils import (
     get_mapped_emotion_set,
     extract_emotion_from_llm_output,
     dump_json_test_result,
-    load_json, str2bool,
+    load_json,
+    # str2bool,
     check_path_exist_from_prefix,
     load_model_via_hf,
     load_model_via_ollama
@@ -67,8 +68,8 @@ def parse_arguments():
 
     parser.add_argument(
         "--use_detailed_example",
-        type=str,
-        default="False",
+        type=lambda x: str(x).lower() in ['true', '1', 't', 'yes', 'y'],
+        default=False,
         help="Map each utterance in example to an emotion if true for the examples from flow or hybrid db"
     )
 
@@ -94,8 +95,8 @@ def parse_arguments():
 
     parser.add_argument(
         "--save",
-        type=str,
-        default="True",
+        type=lambda x: str(x).lower() in ['true', '1', 't', 'yes', 'y'],
+        default=True,
         help="Whether to save the results (default: True)"
     )
 
@@ -121,6 +122,16 @@ def parse_arguments():
         choices=[None, "default", "alt1", "alt2", "default-no-audio"],
         help="Optionally, you can add the prompt speaker characteristics "
              "to the prompt as a hint. If None, it won't be added"
+    )
+
+    parser.add_argument(
+        "--exclude_current_from_history",
+        type=lambda x: str(x).lower() in ['true', '1', 't', 'yes', 'y'],
+        default=False,  # set to False since you said it's the default behavior
+        help=(
+            "If True, the history window will NOT include the current utterance "
+            "(only previous utterances). Default: False."
+        ),
     )
     return parser.parse_args()
 
@@ -168,7 +179,8 @@ def get_extracted_emotion(prediction, emotion_set, assign_to_invalid_emotion=Non
 
 
 @timing
-def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=None, verbose=False):
+def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=None,
+              verbose=False, exclude_current_from_history=False,):
     """
     Run emotion recognition tests on the provided dataset.
 
@@ -211,7 +223,13 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
         # input_variables = ["demonstrations", "history", "speaker_id", "utterance", "audio_features",
                            # "candidate_emotions"],
 
-        inp["history"] = "\n".join(inp["history"].split("\n")[-(max_k+1):])
+        history_lines = inp["history"].split("\n")
+        if exclude_current_from_history:
+            inp["history"]  = "\n".join(history_lines[-(max_k + 1):-1])
+        else:
+            inp["history"]  = "\n".join(history_lines[-(max_k + 1):])
+        # inp["history"] = "\n".join(inp["history"].split("\n")[-(max_k+1):])
+
         prediction = chain.invoke({
             **inp, "candidate_emotions": emotion_set_text
         })
@@ -255,7 +273,7 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
     return predictions, actuals, identifiers, stats
 
 
-def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=False):
+def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=False, exclude_current_from_history=False):
     if get_respective_vectorstore_name:
         if 0 <= max_k <= 20:
             max_k = 20
@@ -265,10 +283,10 @@ def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_examp
         else:
             raise Exception("max_k must be between 1 and 20")
     if top_n == 0:
-        demonstration_id =  f"noexample_n0_m0"
+        demonstration_id =  f"no-example_n0_m0"
     else:
         demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
-    return f"{dataset.upper()}/k{max_k}_{demonstration_id}"
+    return f"{dataset.upper()}/k{max_k}{'-NoCur' if exclude_current_from_history else ''}_{demonstration_id}"
 
 def load_eval_data(args):
     """Load test data from the processed dataset directory."""
@@ -373,7 +391,7 @@ def save_test_results(test_info, predictions, actuals, identifiers, path_to_save
 
 
 def rel_path_to_save_results(args):
-    data_name = get_data_name(args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example)
+    data_name = get_data_name(args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example, args.exclude_current_from_history)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
     file_name = f"{args.dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}"
     if args.speaker_characteristics is not None:
@@ -393,11 +411,14 @@ def main(config_dict=None):
         if config_dict is None:
             args = parse_arguments()
         else:
-            defaults = {"speaker_characteristics": None}
+            defaults = {"speaker_characteristics": None,
+                        "exclude_current_from_history": False
+                        }
+
             defaults.update(config_dict)
             args = argparse.Namespace(**defaults)
-        args.save = str2bool(args.save)
-        args.use_detailed_example = str2bool(args.use_detailed_example)
+        # args.save = str2bool(args.save)
+        # args.use_detailed_example = str2bool(args.use_detailed_example)
 
         print(f"Arguments: {args}")
 
@@ -421,7 +442,8 @@ def main(config_dict=None):
             dataset_name=args.dataset,
             emotion_set=candidate_emotion_set,
             limit=args.limit,
-            verbose=True
+            verbose=True,
+            exclude_current_from_history=args.exclude_current_from_history,
         )
 
         # Build and save results
