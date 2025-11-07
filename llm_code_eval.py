@@ -273,42 +273,35 @@ def run_tests(chain, test_data, dataset_name, max_k, emotion_set=None, limit=Non
     return predictions, actuals, identifiers, stats
 
 
-def get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=False, exclude_current_from_history=False):
+def get_data_name(args, get_respective_vectorstore_name=False):
+    max_k = args.max_k
     if get_respective_vectorstore_name:
-        if 0 <= max_k <= 20:
+        if 0 <= args.max_k <= 20:
             max_k = 20
             # use the most straigtforward vectorstore cache if you don't need example
-            if top_n == 0:
-                return f"{dataset.upper()}/k{max_k}_single_n1_m1"
+            if args.top_n == 0:
+                return f"{args.dataset.upper()}/k{max_k}_single_n1_m1"
         else:
             raise Exception("max_k must be between 1 and 20")
-    if top_n == 0:
+    if args.top_n == 0:
         demonstration_id =  f"no-example_n0_m0"
     else:
-        demonstration_id =  f"{example_type}{'V2' if use_detailed_example and example_type in ['flow', 'hybrid'] else ''}_n{top_n}_m{max_m}"
-    return f"{dataset.upper()}/k{max_k}{'-NoCur' if exclude_current_from_history else ''}_{demonstration_id}"
+        demonstration_id =  f"{args.example_type}{'V2' if args.use_detailed_example and args.example_type in ['flow', 'hybrid'] else ''}_n{args.top_n}_m{args.max_m}"
+    return f"{args.dataset.upper()}/k{max_k}{'-NoCur' if not get_respective_vectorstore_name and args.exclude_current_from_history else ''}_{demonstration_id}"
 
 def load_eval_data(args):
     """Load test data from the processed dataset directory."""
-    dataset = args.dataset
-    max_k = args.max_k
-    example_type = args.example_type
-    top_n = args.top_n
-    max_m = args.max_m
-    use_detailed_example = args.use_detailed_example
-    split = args.split
     speaker_characteristics = args.speaker_characteristics
-    data_name = get_data_name(dataset, max_k, example_type, top_n, max_m, use_detailed_example, get_respective_vectorstore_name=True)
-    processed_data_path = f"PROCESSED_DATASET/{data_name}"
-    eval_data_path = os.path.join(processed_data_path, f"{split.lower()}.json")
+    eval_data_path = os.path.join("PROCESSED_DATASET", get_data_name(args, get_respective_vectorstore_name=True),
+                                       f"{args.split.lower()}.json")
     eval_data = load_json(relative_path_from_project=eval_data_path)
 
-    if top_n == 0:
+    if args.top_n == 0:
         [inp.pop("demonstrations", None) for data in eval_data for inp in [data["input"]]]
 
     if speaker_characteristics is not None:
         idx_to_speaker_characteristics = utils.get_idx_to_speaker_characteristics_hint(speaker_characteristics,
-                                                                                       dataset)
+                                                                                       args.dataset)
         for data in eval_data:
             data["input"]["speaker_characteristics"] = idx_to_speaker_characteristics[data["idx"]]
     return eval_data, eval_data_path
@@ -391,7 +384,7 @@ def save_test_results(test_info, predictions, actuals, identifiers, path_to_save
 
 
 def rel_path_to_save_results(args):
-    data_name = get_data_name(args.dataset, args.max_k, args.example_type, args.top_n, args.max_m, args.use_detailed_example, args.exclude_current_from_history)
+    data_name = get_data_name(args)
     processed_data_path = f"PROCESSED_DATASET/{data_name}"
     file_name = f"{args.dataset.upper()}-model{str(args.model_id)}_{args.prompt_type}_{os.path.basename(processed_data_path)}"
     if args.speaker_characteristics is not None:
