@@ -47,8 +47,8 @@ iemocap.columns.name = "(top_n, max_m)"
 
 average = (meld + iemocap)/2
 
-meld
-iemocap
-average
+print(meld, "\n")
+print(iemocap, "\n")
+print(average, "\n")
 
 
