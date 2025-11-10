@@ -7,6 +7,7 @@ from peft import get_peft_model, LoraConfig, PeftModel, prepare_model_for_kbit_t
 import torch
 import json
 from datasets import load_dataset, concatenate_datasets, DatasetDict
+import datetime
 
 
 
@@ -123,6 +124,8 @@ class BaseTrainer:
         # Auto-generate output_dir if not provided
         if args.output_dir is None:
             stage_name = f"STAGE{self.stage_id}"
+            if self.stage_id == 2 and args.stage1_adapter_path:
+                stage_name = f"STAGE1_2"
             dataset_name = args.dataset.upper()
             lora_type = 'QLORA' if args.use_qlora else 'LORA'
             args.output_dir = os.path.join("FINETUNING", stage_name, dataset_name, lora_type)
@@ -140,23 +143,34 @@ class BaseTrainer:
             print(f"{key}: {value}")
         print("-----------------------------------")
 
-    def save_config(self, save_directory):
+    def save_config(self, save_directory, checkpoint):
         """Saves the final config namespace to the specified directory."""
         print(f"Saving training configuration to {save_directory}...")
+
+
         config_path = os.path.join(save_directory, "training_config.json")
 
         # Convert Namespace to dict for JSON serialization
         config_dict = vars(self.config)
+        start_time = datetime.datetime.now()
 
+        config_dict.update({
+            "stage_id": self.stage_id,
+            "phase_name": self.phase_name,
+            "checkpoint": checkpoint,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S")})
+
+        print("Configuration saved successfully.")
+
+        utils.dump_json_test_result(config_dict, config_path, add_datetime_to_filename=True)
         # Handle non-serializable types if any (e.g., Namespace)
         # For this config, all types should be serializable
-
-        try:
-            with open(config_path, 'w') as f:
-                json.dump(config_dict, f, indent=4)
-            print("Configuration saved successfully.")
-        except Exception as e:
-            print(f"Error saving configuration: {e}")
+        # try:
+        #     with open(config_path, 'w') as f:
+        #         json.dump(config_dict, f, indent=4)
+        #     print("Configuration saved successfully.")
+        # except Exception as e:
+        #     print(f"Error saving configuration: {e}")
 
     def _set_seed(self):
         """Sets the random seed for reproducibility."""
@@ -478,6 +492,8 @@ class BaseTrainer:
             self.load_model()
             self.configure_trainer()
 
+
+
             print(f"--- Starting {self.phase_name} Training ---")
             print(f"Early stopping patience: {self.config.early_stopping_patience} evaluation steps")
 
@@ -504,6 +520,8 @@ class BaseTrainer:
                     print("Resuming training from this checkpoint...")
                     print("=" * 80)
 
+            self.save_config(self.config.output_dir, checkpoint)
+
             # Train (with automatic resume if checkpoint exists)
             if checkpoint:
                 print(f"\nResuming training from: {checkpoint}")
@@ -526,7 +544,6 @@ class BaseTrainer:
             print(f"\nTraining complete. Saving final adapter to {final_checkpoint_dir}")
             os.makedirs(final_checkpoint_dir, exist_ok=True)
             self.trainer.save_model(final_checkpoint_dir)
-            self.save_config(final_checkpoint_dir)
 
             print(f"{self.phase_name} finished successfully.")
 

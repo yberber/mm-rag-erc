@@ -1,15 +1,13 @@
 
 import utils
 import argparse
-from datasets import load_dataset, DatasetDict, Dataset # To load your .jsonl data
+from datasets import DatasetDict, Dataset # To load your .jsonl data
 import data_process
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
 from peft import PeftModel
-import json
 from prompts import EMOTION_RECOGNITION_FINAL_PROMPT
 from tqdm import tqdm
-import os
 from sklearn.metrics import accuracy_score, f1_score
 
 
@@ -37,13 +35,14 @@ def parse_arguments():
     parser.add_argument(
         "--adapter_1_path",
         type=str,
-        default="FINETUNING/PHASE2A/final_checkpoint",
+        # default="FINETUNING/PHASE2A/final_checkpoint",
+        default="FINETUNING/STAGE1_2/IEMOCAP/QLORA/checkpoint-750",
         help="Path to the directory of the *first* finetuned LoRA adapter."
     )
     parser.add_argument(
         "--adapter_2_path",
         type=str,
-        default="FINETUNING/STAGE2/IEMOCAP/QLORA/checkpoint-300",
+        default="FINETUNING/STAGE1_2/IEMOCAP/QLORA/checkpoint-600",
         help="Path to the directory of the *second* finetuned LoRA adapter."
     )
     parser.add_argument(
@@ -76,6 +75,13 @@ def parse_arguments():
         default=False,
         help="Whether to include the base model in the comparison."
     )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="dev",
+        choices=["train", "dev", "test"],
+        help="Which split to use? Default: dev"
+    )
     return parser.parse_args()
 
 
@@ -87,9 +93,8 @@ def save_eval_results(args, stats, results, path_to_save):
         "stats": stats,
         "results": results,
     }
-
     utils.makedirs(relative_path_from_project=path_to_save[:path_to_save.rfind("/")])
-    utils.dump_json_test_result(eval_args_results, relative_path_from_project=path_to_save)
+    utils.dump_json_test_result(eval_args_results, relative_path_from_project=path_to_save, add_datetime_to_filename=True)
 
 
 def get_dev_data(configs):
@@ -101,7 +106,8 @@ def get_dev_data(configs):
     datasets_to_use = ["meld", "iemocap"] if configs["dataset"] == "both" else [configs["dataset"]]
 
     # We only care about the 'dev' split
-    training_set = {"dev": []}
+    # training_set = {"dev": []}
+    training_set = {configs["split"][0]: []}
 
     for ds_name in datasets_to_use:
         candidate_emotions = utils.get_mapped_emotion_set(ds_name)
@@ -305,9 +311,9 @@ def main():
         print(f"prompts: {prompt_text}")
         print(f"outputs: {ground_truth}")
         if args.include_base:
-            print(f"base_model_output: {base_output}, Score: {base_correct}/{prediction_cnt}")
-        print(f"adapter_1_output: {adapter_1_output}, Score: {adapter_1_correct}/{prediction_cnt}")
-        print(f"adapter_2_output: {adapter_2_output}, Score: {adapter_2_correct}/{prediction_cnt}")
+            print(f"base_model_output: {base_output}, Score: {base_correct}/{prediction_cnt} => {base_correct/prediction_cnt:.3f}")
+        print(f"adapter_1_output: {adapter_1_output}, Score: {adapter_1_correct}/{prediction_cnt} => {adapter_1_correct/prediction_cnt:.3f}")
+        print(f"adapter_2_output: {adapter_2_output}, Score: {adapter_2_correct}/{prediction_cnt} => {adapter_2_correct/prediction_cnt:.3f}")
         print("\n" + "-" * 80)
 
     ground_truths = [data["ground_truth"] for data in results]

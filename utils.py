@@ -137,6 +137,7 @@ def check_path_exist_from_prefix(path=None, relative_path_from_project=None):
     return len(glob(path + "*")) > 0
 
 
+
 def dump_json_test_result(result, path=None, relative_path_from_project=None, add_datetime_to_filename=False, verbose=True):
     path = get_path(path=path, relative_path_from_project=relative_path_from_project)
 

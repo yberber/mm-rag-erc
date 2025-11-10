@@ -5,6 +5,8 @@ from LORA_TRAINING.training_helper import BaseTrainer
 from datasets import DatasetDict, Dataset
 
 
+os.environ["WANDB_PROJECT"] = "stage2-emotion-recognition"
+
 class Phase2Trainer(BaseTrainer):
     """
     Trainer for Phase 2: Emotion Recognition.
@@ -29,7 +31,9 @@ class Phase2Trainer(BaseTrainer):
             # "use_qlora": False,
             "iemocap_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/IEMOCAP/",
             "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/",
-            # "batch_size": 2,
+            "stage1_adapter_path": f"FINETUNING/STAGE1/BOTH/QLORA/final_checkpoint",
+            "learning_rate": 5e-5
+            # "batch_size"§: 2,
             # "gradient_accumulation_steps": 8
         }
 
@@ -116,6 +120,7 @@ class Phase2Trainer(BaseTrainer):
 if __name__ == "__main__":
     # When run directly, config_dict is None, so it will parse command-line args
     # The parser will use the defaults from _get_default_args
+    print("Phase 2 training is started!")
     trainer = Phase2Trainer(config_dict=None)
     trainer.run()
 
