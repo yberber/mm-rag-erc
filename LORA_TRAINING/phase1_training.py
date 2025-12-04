@@ -26,7 +26,8 @@ class Phase1Trainer(BaseTrainer):
         return {
             "dataset": "both",
             "iemocap_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/IEMOCAP/",
-            "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/"
+            "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/",
+            "learning_rate": 2e-4
         }
 
 

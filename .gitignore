@@ -7,3 +7,4 @@ vertexai_test.py
 comparison_results*.json
 wandb
 FINETUNING/
+TEMP_FILES/

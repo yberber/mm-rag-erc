@@ -38,7 +38,9 @@ def get_base_parser():
     )
     parser.add_argument("--use_qlora", type=lambda x: (str(x).lower() in ['true', '1', 't']), default=True,
                         help="Set to False to use standard LoRA (16-bit) instead of QLoRA (4-bit).")
-    parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
+    parser.add_argument("--prompt_type", type=str, default="default",
+                        help="Type of prompt template")
+    parser.add_argument('--epochs', type=int, default=4, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch size per device')
     parser.add_argument('--learning_rate', type=float, default=2e-4, help='Learning rate')
     parser.add_argument("--max_seq_length", type=int, default=1536,
@@ -126,6 +128,12 @@ class BaseTrainer:
             stage_name = f"STAGE{self.stage_id}"
             if self.stage_id == 2 and args.stage1_adapter_path:
                 stage_name = f"STAGE1_2"
+
+            # if args.prompt_type and args.prompt_type in ["gemini"]:
+            stage_name += f"-{args.prompt_type.upper()}"
+
+            stage_name += f"-r{str(args.lora_r)}"
+            os.environ["WANDB_PROJECT"] = f"{stage_name}-{args.dataset.upper()}"
             dataset_name = args.dataset.upper()
             lora_type = 'QLORA' if args.use_qlora else 'LORA'
             args.output_dir = os.path.join("FINETUNING", stage_name, dataset_name, lora_type)
@@ -228,6 +236,9 @@ class BaseTrainer:
           - masks prompt tokens in the labels (for causal LM training)
         """
         PROMPT = self.get_prompt_template()
+        print(f"Prompt template type: {self.config.prompt_type}")
+        print(f"Prompt template: {PROMPT}")
+        print(f"#" * 50)
         def tokenize_function(batch):
             prompts_with_output = []
             prompt_lengths = []
@@ -295,22 +306,6 @@ class BaseTrainer:
         print("Data tokenization complete.")
         print(f"Train dataset size: {len(tokenized_datasets['train'])}")
         print(f"Dev dataset size:   {len(tokenized_datasets['dev'])}")
-
-        # longest is 1472 for stage 2, 1020 for stage 2
-        # longest = 0
-        # input_ids = None
-        # cnt = 0
-        # for split in tokenized_datasets.keys():
-        #     for dev in tokenized_datasets[split]:
-        #         assert  len(dev['input_ids']) == len(dev['attention_mask']) == len(dev['labels'])
-        #         if len(dev['input_ids']) > longest:
-        #             cnt += 1
-        #             longest = len(dev['input_ids'])
-        #             input_ids = dev['input_ids']
-        #             print(f"new longest {longest}")
-        # self.tokenizer.decode(input_ids)
-
-
 
         self.tokenized_datasets = tokenized_datasets
         return tokenized_datasets
@@ -451,7 +446,7 @@ class BaseTrainer:
 
             save_strategy="steps",
             save_steps=self.config.eval_save_steps,
-            save_total_limit=5,
+            save_total_limit=7,
 
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",

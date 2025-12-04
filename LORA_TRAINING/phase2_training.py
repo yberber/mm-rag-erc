@@ -1,11 +1,11 @@
 import os
 import utils
-from prompts import EMOTION_RECOGNITION_FINAL_PROMPT
+from prompts import EMOTION_RECOGNITION_FINAL_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT
 from LORA_TRAINING.training_helper import BaseTrainer
 from datasets import DatasetDict, Dataset
 
 
-os.environ["WANDB_PROJECT"] = "stage2-emotion-recognition"
+os.environ["WANDB_PROJECT"] = "stage2-emotion-recognition-gemini"
 
 class Phase2Trainer(BaseTrainer):
     """
@@ -32,9 +32,12 @@ class Phase2Trainer(BaseTrainer):
             "iemocap_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/IEMOCAP/",
             "meld_data_path": f"TRAINING_DATA/PHASE{self.stage_id}/MELD/",
             "stage1_adapter_path": f"FINETUNING/STAGE1/BOTH/QLORA/final_checkpoint",
-            "learning_rate": 5e-5
-            # "batch_size"§: 2,
-            # "gradient_accumulation_steps": 8
+            "learning_rate": 5e-5,
+            "lora_r": 16,
+            "lora_alpha": 32,
+            "batch_size": 8,
+            "gradient_accumulation_steps": 2,
+            "early_stopping_patience": 2
         }
 
 
@@ -113,6 +116,9 @@ class Phase2Trainer(BaseTrainer):
         pass
 
     def get_prompt_template(self):
+        assert self.config.prompt_type.lower() in ["gemini", "default", None]
+        if self.config.prompt_type.lower() == "gemini":
+            return GEMINI_EMOTION_RECOGNITION_PROMPT
         return EMOTION_RECOGNITION_FINAL_PROMPT
 
 
