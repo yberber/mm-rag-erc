@@ -22,6 +22,76 @@ EMOTION_RECOGNITION_FINAL_PROMPT = PromptTemplate(
 )
 EMOTION_RECOGNITION_FINAL_PROMPT.name = "EMOTION_RECOGNITION_FINAL_PROMPT"
 
+
+
+EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_RAG = """Now you are an expert in dialogue emotion recognition.
+
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+
+Based on the above conversation context, please select the emotional label of < "{speaker_id}" : "{utterance}" >, said with < {audio_features} >, from < {candidate_emotions} >.
+Please output only the selected emotion label:
+"""
+
+# The corresponding PromptTemplate object
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "audio_features", "candidate_emotions"],
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+)
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG"
+
+
+EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_AUDIO = """Now you are an expert in dialogue emotion recognition.
+
+Example(s):
+{demonstrations}
+
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+
+Based on the above conversation context, please select the emotional label of < "{speaker_id}" : "{utterance}" > from < {candidate_emotions} >.
+Please output only the selected emotion label:
+"""
+
+# The corresponding PromptTemplate object
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO = PromptTemplate(
+    input_variables=["demonstrations", "history", "speaker_id", "utterance", "candidate_emotions"],
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+)
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO"
+
+
+
+
+EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_AUDIO_RAG = """Now you are an expert in dialogue emotion recognition.
+
+The following conversation noted between '### ###' involves several speakers.
+###
+{history}
+###
+
+Based on the above conversation context, please select the emotional label of < "{speaker_id}" : "{utterance}" > from < {candidate_emotions} >.
+Please output only the selected emotion label:
+"""
+
+# The corresponding PromptTemplate object
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG = PromptTemplate(
+    input_variables=["history", "speaker_id", "utterance", "candidate_emotions"],
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+)
+EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG"
+
+
+
+
+
+
+
+
 EMOTION_RECOGNITION_TEMPLATE = """Now you are an expert in dialogue emotion recognition.
 
 Example(s):

@@ -5,7 +5,9 @@ import data_process
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
 from peft import PeftModel
-from prompts import EMOTION_RECOGNITION_FINAL_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT
+from prompts import EMOTION_RECOGNITION_FINAL_PROMPT, GEMINI_EMOTION_RECOGNITION_PROMPT, \
+    EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG, EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG, \
+    EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score
 import os
@@ -85,6 +87,19 @@ def parse_arguments():
         help="Verbosity level."
     )
 
+    parser.add_argument(
+        "--use_audio",
+        type=lambda x: (str(x).lower() in ["true", "1", "t", "yes", "y"]),
+        default=True,
+        help="Whether to use abstracted audio information in the prompt",
+    )
+
+    parser.add_argument(
+        "--use_rag_in_context",
+        type=lambda x: (str(x).lower() in ["true", "1", "t", "yes", "y"]),
+        default=True,
+        help="Whether to use in context learning via RAG",
+    )
     return parser.parse_args()
 
 
@@ -103,7 +118,25 @@ def save_eval_results(args, stats, results, path_to_save):
     )
 
 
-def get_eval_data(configs):
+def process_inputs_in_processed_dataset(processed_dataset, split, candidate_emotions_text, use_audio=True, use_rag_in_contex=True):
+    transformed = []
+    for ex in processed_dataset[split]:
+        input = ex['input'].copy()
+        if not use_audio:
+            input.pop('audio_features')
+        if not use_rag_in_contex:
+            input.pop('demonstrations')
+        input["candidate_emotions"] = candidate_emotions_text
+        transformed.append({
+            "inputs": input,
+            "output": ex["target"],
+            "idx": ex["idx"]
+        })
+    return transformed
+
+
+
+def get_eval_data(configs, use_audio=True, use_rag_in_contex=True):
     assert configs["dataset"] in ["meld", "iemocap", "both"]
     datasets_to_use = ["meld", "iemocap"] if configs["dataset"] == "both" else [configs["dataset"]]
 
@@ -118,15 +151,9 @@ def get_eval_data(configs):
         processed_dataset = data_process.main(tmp_configs)
 
         for split in training_set.keys():
-            transformed = []
-            for ex in processed_dataset[split]:
-                inp = ex["input"].copy()
-                inp["candidate_emotions"] = candidate_emotions_text
-                transformed.append({
-                    "inputs": inp,
-                    "output": ex["target"],
-                    "idx": ex["idx"]   # added
-                })
+            transformed = process_inputs_in_processed_dataset(processed_dataset, split,
+                                                              candidate_emotions_text,
+                                                              use_audio, use_rag_in_contex)
             training_set[split].extend(transformed)
 
     raw_datasets = DatasetDict({
@@ -208,17 +235,28 @@ def get_extracted_emotion(prediction, emotion_set, assign_to_invalid_emotion=Non
     return extracted
 
 
+def get_intermediate_path_for_ablation_studies(args):
+    if args.use_audio and args.use_rag_in_context:
+        ""
+    elif (not args.use_audio) and args.use_rag_in_context:
+        return "ABLATION/NO_AUDIO"
+    elif args.use_audio and (not args.use_rag_in_context):
+        return "ABLATION/NO_RAG"
+    else:
+        return "ABLATION/NO_AUDIO_RAG"
+
 def build_output_path(args):
     split = args.split
     dataset_name = args.dataset
 
+    ablation_intermediate = get_intermediate_path_for_ablation_studies(args)
     if args.adapter_path:
         adapter_subpath = args.adapter_path
         if adapter_subpath.startswith("FINETUNING/"):
             adapter_subpath = adapter_subpath.split("/", 1)[1]
-        output_dir = os.path.join("EVAL_FINAL", adapter_subpath, dataset_name.upper(),  split)
+        output_dir = os.path.join("EVAL_FINAL", adapter_subpath, ablation_intermediate, dataset_name.upper(),  split)
     else:
-        output_dir = os.path.join("EVAL_FINAL", "BASE", dataset_name.upper(), split)
+        output_dir = os.path.join("EVAL_FINAL", "BASE", ablation_intermediate, dataset_name.upper(), split)
 
     if os.path.exists(output_dir) and os.listdir(output_dir):
         raise RuntimeError(
@@ -230,8 +268,21 @@ def build_output_path(args):
     return path_to_save
 
 
+def get_prompt_template(args):
+    if "gemini" in args.adapter_path.lower():
+        return GEMINI_EMOTION_RECOGNITION_PROMPT
+    elif args.use_audio and args.use_rag_in_context:
+        return EMOTION_RECOGNITION_FINAL_PROMPT
+    elif (not args.use_audio) and args.use_rag_in_context:
+        return EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO
+    elif args.use_audio and (not args.use_rag_in_context):
+        return EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG
+    else:
+        return EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG
+
 def main():
     args = parse_arguments()
+    print(f"Arguments: {args}")
     if torch.cuda.is_available():
         device = "cuda"
     else:
@@ -243,9 +294,10 @@ def main():
 
     TRAINING_SET_CONFIGS["split"] = [args.split]
     output_path = build_output_path(args)
+    print(f"Output path: {output_path}")
 
     # 1. Load Data
-    eval_data = get_eval_data(TRAINING_SET_CONFIGS)
+    eval_data = get_eval_data(TRAINING_SET_CONFIGS, args.use_audio,args.use_rag_in_context)
     emotion_set = utils.get_mapped_emotion_set(TRAINING_SET_CONFIGS["dataset"])
     if args.limit:
         print(f"Limiting evaluation to first {args.limit} examples.")
@@ -277,7 +329,8 @@ def main():
     # Iterate in chunks
     total_samples = len(eval_data)
 
-    PROMPT_TEMPLATE = GEMINI_EMOTION_RECOGNITION_PROMPT if "gemini" in args.adapter_path.lower() else EMOTION_RECOGNITION_FINAL_PROMPT
+    PROMPT_TEMPLATE = get_prompt_template(args)
+    print(f"Prompt template name: {PROMPT_TEMPLATE.name}")
     print(f"Prompt template: {PROMPT_TEMPLATE}")
 
     for i in tqdm(range(0, total_samples, args.batch_size), desc="Eval Batches"):
