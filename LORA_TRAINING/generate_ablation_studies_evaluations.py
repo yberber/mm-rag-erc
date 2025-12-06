@@ -98,7 +98,7 @@ def run_single_eval(
     limit: Optional[int],
     verbose: Optional[int],
     use_audio: bool,
-    use_rag_in_context: bool
+    use_rag: bool
 ):
     """
     Call the single-model evaluation script (as a module) with the given parameters.
@@ -122,8 +122,10 @@ def run_single_eval(
         split,
         "--use_qlora",
         "true" if use_qlora else "false",
+        "--use_audio",
         "true" if use_audio else "false",
-        "true" if use_rag_in_context else 'false'
+        "--use_rag",
+        "true" if use_rag else 'false'
 
     ]
 
@@ -178,7 +180,7 @@ def main():
                 limit=args.limit,
                 verbose=args.verbose,
                 use_audio=use_audio,
-                use_rag_in_context=use_rag
+                use_rag=use_rag
             )
         if args.dataset.lower() in ["iemocap", "combined", "both"]:
             run_single_eval(
@@ -191,7 +193,7 @@ def main():
                 limit=args.limit,
                 verbose=args.verbose,
                 use_audio=use_audio,
-                use_rag_in_context=use_rag
+                use_rag=use_rag
             )
 
 

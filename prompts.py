@@ -38,7 +38,7 @@ Please output only the selected emotion label:
 # The corresponding PromptTemplate object
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG = PromptTemplate(
     input_variables=["history", "speaker_id", "utterance", "audio_features", "candidate_emotions"],
-    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_RAG
 )
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG"
 
@@ -60,7 +60,7 @@ Please output only the selected emotion label:
 # The corresponding PromptTemplate object
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO = PromptTemplate(
     input_variables=["demonstrations", "history", "speaker_id", "utterance", "candidate_emotions"],
-    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_AUDIO
 )
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO"
 
@@ -81,7 +81,7 @@ Please output only the selected emotion label:
 # The corresponding PromptTemplate object
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG = PromptTemplate(
     input_variables=["history", "speaker_id", "utterance", "candidate_emotions"],
-    template=EMOTION_RECOGNITION_FINAL_TEMPLATE
+    template=EMOTION_RECOGNITION_FINAL_TEMPLATE_NO_AUDIO_RAG
 )
 EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG.name = "EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG"
 

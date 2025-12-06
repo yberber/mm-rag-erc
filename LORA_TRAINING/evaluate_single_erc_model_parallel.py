@@ -95,7 +95,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        "--use_rag_in_context",
+        "--use_rag",
         type=lambda x: (str(x).lower() in ["true", "1", "t", "yes", "y"]),
         default=True,
         help="Whether to use in context learning via RAG",
@@ -103,10 +103,11 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def save_eval_results(args, stats, results, path_to_save):
+def save_eval_results(args, stats, results, prompt, path_to_save):
     eval_args_results = {
         "stats": stats,
         "args": vars(args),
+        "prompt_info": {"prompt_name": prompt.name, "prompt_template": prompt.template},
         "training_set_configs": TRAINING_SET_CONFIGS,
         "results": results,
     }
@@ -236,11 +237,11 @@ def get_extracted_emotion(prediction, emotion_set, assign_to_invalid_emotion=Non
 
 
 def get_intermediate_path_for_ablation_studies(args):
-    if args.use_audio and args.use_rag_in_context:
+    if args.use_audio and args.use_rag:
         ""
-    elif (not args.use_audio) and args.use_rag_in_context:
+    elif (not args.use_audio) and args.use_rag:
         return "ABLATION/NO_AUDIO"
-    elif args.use_audio and (not args.use_rag_in_context):
+    elif args.use_audio and (not args.use_rag):
         return "ABLATION/NO_RAG"
     else:
         return "ABLATION/NO_AUDIO_RAG"
@@ -254,9 +255,9 @@ def build_output_path(args):
         adapter_subpath = args.adapter_path
         if adapter_subpath.startswith("FINETUNING/"):
             adapter_subpath = adapter_subpath.split("/", 1)[1]
-        output_dir = os.path.join("EVAL_FINAL", adapter_subpath, ablation_intermediate, dataset_name.upper(),  split)
+        output_dir = os.path.join("EVAL_FINAL", ablation_intermediate, adapter_subpath, dataset_name.upper(),  split)
     else:
-        output_dir = os.path.join("EVAL_FINAL", "BASE", ablation_intermediate, dataset_name.upper(), split)
+        output_dir = os.path.join("EVAL_FINAL", ablation_intermediate, "BASE", dataset_name.upper(), split)
 
     if os.path.exists(output_dir) and os.listdir(output_dir):
         raise RuntimeError(
@@ -271,11 +272,11 @@ def build_output_path(args):
 def get_prompt_template(args):
     if "gemini" in args.adapter_path.lower():
         return GEMINI_EMOTION_RECOGNITION_PROMPT
-    elif args.use_audio and args.use_rag_in_context:
+    elif args.use_audio and args.use_rag:
         return EMOTION_RECOGNITION_FINAL_PROMPT
-    elif (not args.use_audio) and args.use_rag_in_context:
+    elif (not args.use_audio) and args.use_rag:
         return EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO
-    elif args.use_audio and (not args.use_rag_in_context):
+    elif args.use_audio and (not args.use_rag):
         return EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG
     else:
         return EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG
@@ -297,11 +298,16 @@ def main():
     print(f"Output path: {output_path}")
 
     # 1. Load Data
-    eval_data = get_eval_data(TRAINING_SET_CONFIGS, args.use_audio,args.use_rag_in_context)
+    eval_data = get_eval_data(TRAINING_SET_CONFIGS, args.use_audio,args.use_rag)
     emotion_set = utils.get_mapped_emotion_set(TRAINING_SET_CONFIGS["dataset"])
     if args.limit:
         print(f"Limiting evaluation to first {args.limit} examples.")
         eval_data = eval_data.select(range(args.limit))
+
+    PROMPT_TEMPLATE = get_prompt_template(args)
+    print(f"Prompt template name: {PROMPT_TEMPLATE.name}")
+    print(f"Prompt template: {PROMPT_TEMPLATE}")
+
 
     # 2. Load Model
     print("\n--- Loading Model ---")
@@ -329,9 +335,7 @@ def main():
     # Iterate in chunks
     total_samples = len(eval_data)
 
-    PROMPT_TEMPLATE = get_prompt_template(args)
-    print(f"Prompt template name: {PROMPT_TEMPLATE.name}")
-    print(f"Prompt template: {PROMPT_TEMPLATE}")
+
 
     for i in tqdm(range(0, total_samples, args.batch_size), desc="Eval Batches"):
 
@@ -417,7 +421,7 @@ def main():
         "f1_weighted": f1,
     }
 
-    save_eval_results(args, stats, results, path_to_save=output_path)
+    save_eval_results(args, stats, results, PROMPT_TEMPLATE, path_to_save=output_path)
 
     print("\n--- Evaluation Complete ---")
     print(f"Results saved under: {output_path}")

@@ -9,7 +9,7 @@ from datasets import load_dataset, concatenate_datasets
 from prompts import SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT
 import evaluate
 
-BATCH_SIZE = 8  # Adjust based on your GPU VRAM.
+BATCH_SIZE = 16  # Adjust based on your GPU VRAM.
 
 
 def parse_arguments():
@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument(
         "--adapter_path",
         type=str,
-        default="FINETUNING/STAGE1/BOTH/QLORA/checkpoint-450",
+        default="FINETUNING/STAGE1/BOTH/QLORA/final_checkpoint",
         help=(
             "Optional path to the directory of a finetuned LoRA adapter. "
             "If omitted, the base model will be evaluated."
@@ -46,7 +46,7 @@ def parse_arguments():
     parser.add_argument(
         "--limit",
         type=int,
-        default=100,
+        default=None,
         help="Optional: Limit evaluation to the first N examples for testing."
     )
     parser.add_argument(
@@ -60,7 +60,7 @@ def parse_arguments():
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=1,
+        default=BATCH_SIZE,
         help="Batch size for inference. Default: 16"
     )
 
@@ -88,7 +88,7 @@ def save_eval_results(args, stats, results, path_to_save):
     eval_args_results = {
         "stats": stats,
         "args": vars(args),
-        "results": results[:100],
+        "results": results,
     }
     utils.makedirs(relative_path_from_project=path_to_save[:path_to_save.rfind("/")])
     utils.dump_json_test_result(
@@ -325,7 +325,8 @@ def main():
         # Prepare inputs and ground truths
         batch_prompts = []
         batch_ground_truths = []
-        batch_indices = []
+        # batch_indices = []
+        batch_idens = []  # <--- [CHANGE 1] List to store IDs
 
         # Construct prompts for the batch
         for idx_in_batch, input_data in enumerate(batch_slice['inputs']):
@@ -333,7 +334,9 @@ def main():
                 prompt_text = SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT.format(**input_data)
                 batch_prompts.append(prompt_text)
                 batch_ground_truths.append(batch_slice['output'][idx_in_batch])
-                batch_indices.append(idx_in_batch)
+                # batch_indices.append(idx_in_batch)
+                # <--- [CHANGE 2] Extract and store the 'iden'
+                batch_idens.append(batch_slice['iden'][idx_in_batch])
             except KeyError as e:
                 print(f"ERROR: Prompt formatting failed for index {i + idx_in_batch}. Key missing: {e}")
                 continue
@@ -353,7 +356,8 @@ def main():
             y_pred.append(raw_output)
 
             results.append({
-                "prompt": prompt,
+                # "prompt": prompt,
+                "iden": batch_idens[j],
                 "ground_truth": gt,
                 "model_output": raw_output,
             })
