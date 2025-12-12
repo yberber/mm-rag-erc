@@ -49,7 +49,7 @@ def run_single_eval(
     This runs:
         python -m <eval_module> ...
     e.g.:
-        python -m LORA_TRAINING.evaluate_single_erc_model_parallel --base_model_id ...
+        python -m LORA_TRAINING.evaluate_single_phase2_model_parallel --base_model_id ...
     """
     cmd = [
         "python",
@@ -92,13 +92,13 @@ def run_single_eval(
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run evaluate_single_erc_model_parallel.py for base model and all adapters."
+        description="Run evaluate_single_phase2_model_parallel.py for base model and all adapters."
     )
 
     parser.add_argument(
         "--eval_module",
         type=str,
-        default="LORA_TRAINING.evaluate_single_erc_model_parallel",
+        default="LORA_TRAINING.evaluate_single_phase2_model_parallel",
         help=(
             "Module path of the single-model evaluation script "
             "(used with `python -m`). "

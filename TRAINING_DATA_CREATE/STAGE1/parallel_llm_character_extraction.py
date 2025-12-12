@@ -17,6 +17,7 @@ import numpy as np
 utils.set_pandas_display_options()
 
 
+CONCURRENCY_LIMIT = 15
 
 
 def parse_arguments():
@@ -214,7 +215,6 @@ def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, 
     return data
 
 
-CONCURRENCY_LIMIT = 15
 
 
 async def process_data_point(data, chain, semaphore, prompt_template_str, verbose):
