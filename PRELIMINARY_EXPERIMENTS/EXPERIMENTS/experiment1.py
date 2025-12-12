@@ -1,4 +1,4 @@
-import llm_code_eval
+from PRELIMINARY_EXPERIMENTS import llm_code_eval
 
 config = {
     "dataset": "meld",
@@ -20,13 +20,28 @@ prompt_types = [ "gemini", "claude", "gpt5", "default"]
 
 configs = []
 
+print("=" * 80)
+print(f"Start with Experiment 1a")
+config["experiment_id"] = "1a"
 for dataset in datasets:
     for prompt_type in prompt_types:
         config["dataset"] = dataset
         config["prompt_type"] = prompt_type
         configs.append(config.copy())
+for config in configs:
+    llm_code_eval.main(config)
+    print("*****************\n")
 
 
+print("=" * 80)
+print(f"Start with Experiment 1b")
+config["experiment_id"] = "1b"
+config["experiment_id"] = "1b"
+for dataset in datasets:
+    for prompt_type in prompt_types:
+        config["dataset"] = dataset
+        config["prompt_type"] = prompt_type
+        configs.append(config.copy())
 for config in configs:
     llm_code_eval.main(config)
     print("*****************\n")

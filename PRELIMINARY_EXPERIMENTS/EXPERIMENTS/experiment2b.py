@@ -1,5 +1,4 @@
-import llm_code_eval
-
+from PRELIMINARY_EXPERIMENTS import llm_code_eval
 
 
 def get_updated_config(config, dataset, max_k, top_n, example_type, max_m, use_detailed_example):
@@ -24,7 +23,7 @@ config = {
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
-    "experiment_id": 3
+    "experiment_id": "2b"
 }
 
 datasets = ["iemocap", "meld"]
@@ -58,5 +57,7 @@ special_case_meld = get_updated_config(config, "meld", max_k=12, top_n=0, exampl
 config_list.append(special_case_iemocap)
 config_list.append(special_case_meld)
 
+print("=" * 80)
+print(f"Start with Experiment 2b")
 for config in config_list:
     llm_code_eval.main(config)

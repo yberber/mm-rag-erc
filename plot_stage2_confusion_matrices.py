@@ -4,15 +4,19 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import os
+from glob import glob
+
+
+
 
 # ---------------------------------------------------------
 # 1. Configuration
 # ---------------------------------------------------------
 
 # Exact paths provided
-FILE_PATHS = {
-    "MELD": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/MELD/QLORA/checkpoint-750/MELD/test/results_Dec-04-2025_19_56_29.json",
-    "IEMOCAP": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/IEMOCAP/QLORA/checkpoint-750/IEMOCAP/test/results_Dec-04-2025_19:24:07.json"
+FILE_DIRS = {
+    "MELD": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/MELD-Only/QLORA/checkpoint-750/MELD/test/",
+    "IEMOCAP": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/IEMOCAP-Only/QLORA/checkpoint-750/IEMOCAP/test/"
 }
 
 # Label mappings defined in your thesis (Section 4.1.1 & 4.1.2)
@@ -21,6 +25,14 @@ LABELS = {
     "IEMOCAP": ['joyful', 'sad', 'neutral', 'angry', 'excited', 'frustrated']
 }
 
+
+
+def get_latest_result_file(directory):
+    """Returns the newest results_*.json file in a directory."""
+    files = glob(os.path.join(directory, "results_*.json"))
+    if not files:
+        raise FileNotFoundError(f"No results_*.json found in {directory}")
+    return max(files, key=os.path.getmtime)
 
 # ---------------------------------------------------------
 # 2. Helper Functions
@@ -89,16 +101,16 @@ def plot_cm(y_true, y_pred, classes, dataset_name, cmap='Blues'):
 if __name__ == "__main__":
     print("Generating Confusion Matrices...")
 
-    # Process MELD
-    print(f"Processing MELD from: {FILE_PATHS['MELD']}")
-    y_true_meld, y_pred_meld = load_data(FILE_PATHS['MELD'])
-    plot_cm(y_true_meld, y_pred_meld, LABELS['MELD'], "MELD", cmap='Blues')
+    # MELD
+    meld_file = get_latest_result_file(FILE_DIRS["MELD"])
+    print(f"Processing MELD from: {meld_file}")
+    y_true_meld, y_pred_meld = load_data(meld_file)
+    plot_cm(y_true_meld, y_pred_meld, LABELS["MELD"], "MELD", cmap="Blues")
 
-    # Process IEMOCAP
-    print(f"Processing IEMOCAP from: {FILE_PATHS['IEMOCAP']}")
-    y_true_iem, y_pred_iem = load_data(FILE_PATHS['IEMOCAP'])
-    plot_cm(y_true_iem, y_pred_iem, LABELS['IEMOCAP'], "IEMOCAP", cmap='Reds')
-    # plot_cm(y_true_iem, y_pred_iem, LABELS['IEMOCAP'], "IEMOCAP", cmap='Blues')
+    # IEMOCAP
+    iem_file = get_latest_result_file(FILE_DIRS["IEMOCAP"])
+    print(f"Processing IEMOCAP from: {iem_file}")
+    y_true_iem, y_pred_iem = load_data(iem_file)
+    plot_cm(y_true_iem, y_pred_iem, LABELS["IEMOCAP"], "IEMOCAP", cmap="Reds")
 
-
-    print("\nDone! Images are saved in the current directory.")
+    print("\nDone!")

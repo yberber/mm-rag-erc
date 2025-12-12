@@ -21,23 +21,23 @@ def get_f1_score(file_pattern, dataset_name):
 # ---------------------------------------------------------
 paths = {
     "Ours (w/ Full Context)": {
-        "IEMOCAP": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/IEMOCAP/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
-        "MELD":    "EVAL_FINAL/STAGE1_2-DEFAULT-r16/MELD/QLORA/checkpoint-750/MELD/test/results_*.json"
+        "IEMOCAP": "EVAL_FINAL/STAGE1_2-DEFAULT-r16/IEMOCAP-Only/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
+        "MELD":    "EVAL_FINAL/STAGE1_2-DEFAULT-r16/MELD-Only/QLORA/checkpoint-750/MELD/test/results_*.json"
     },
     "Ours (w/o Audio)": {
         # Has RAG, but NO Audio
-        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_AUDIO/STAGE1_2-DEFAULT-r16/IEMOCAP/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
-        "MELD":    "EVAL_FINAL/ABLATION/NO_AUDIO/STAGE1_2-DEFAULT-r16/MELD/QLORA/checkpoint-750/MELD/test/results_*.json"
+        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_AUDIO/STAGE1_2-DEFAULT-r16/IEMOCAP-Only/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
+        "MELD":    "EVAL_FINAL/ABLATION/NO_AUDIO/STAGE1_2-DEFAULT-r16/MELD-Only/QLORA/checkpoint-750/MELD/test/results_*.json"
     },
     "Ours (w/o RAG)": {
         # Has Audio, but NO RAG
-        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_RAG/STAGE1_2-DEFAULT-r16/IEMOCAP/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
-        "MELD":    "EVAL_FINAL/ABLATION/NO_RAG/STAGE1_2-DEFAULT-r16/MELD/QLORA/checkpoint-750/MELD/test/results_*.json"
+        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_RAG/STAGE1_2-DEFAULT-r16/IEMOCAP-Only/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
+        "MELD":    "EVAL_FINAL/ABLATION/NO_RAG/STAGE1_2-DEFAULT-r16/MELD-Only/QLORA/checkpoint-750/MELD/test/results_*.json"
     },
     "Ours (w/o Audio&RAG)": {
         # Text Only
-        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_AUDIO_RAG/STAGE1_2-DEFAULT-r16/IEMOCAP/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
-        "MELD":    "EVAL_FINAL/ABLATION/NO_AUDIO_RAG/STAGE1_2-DEFAULT-r16/MELD/QLORA/checkpoint-750/MELD/test/results_*.json"
+        "IEMOCAP": "EVAL_FINAL/ABLATION/NO_AUDIO_RAG/STAGE1_2-DEFAULT-r16/IEMOCAP-Only/QLORA/checkpoint-750/IEMOCAP/test/results_*.json",
+        "MELD":    "EVAL_FINAL/ABLATION/NO_AUDIO_RAG/STAGE1_2-DEFAULT-r16/MELD-Only/QLORA/checkpoint-750/MELD/test/results_*.json"
     }
 }
 

@@ -292,7 +292,7 @@ def get_data_name(args, get_respective_vectorstore_name=False):
 def load_eval_data(args):
     """Load test data from the processed dataset directory."""
     speaker_characteristics = args.speaker_characteristics
-    eval_data_path = os.path.join("PROCESSED_DATASET", get_data_name(args, get_respective_vectorstore_name=True),
+    eval_data_path = os.path.join("../PROCESSED_DATASET", get_data_name(args, get_respective_vectorstore_name=True),
                                        f"{args.split.lower()}.json")
     eval_data = load_json(relative_path_from_project=eval_data_path)
 

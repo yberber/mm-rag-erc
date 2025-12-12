@@ -9,10 +9,8 @@ from utils import (get_meld_iemocap_datasets_as_dataframe,
 
 # --- Configuration ---
 SCRIPT_DIR = Path(__file__).parent.resolve()
-CACHE_DIR = SCRIPT_DIR.parent / "vectorstore" / "caches"
-RESULTS_DIR = SCRIPT_DIR.parent / "EVALUATION_RESULTS/retriaval_evaluations"
+CACHE_DIR = SCRIPT_DIR.parent.parent / "vectorstore" / "caches"
 TOP_N = 3
-save_results = False
 
 set_pandas_display_options()
 
@@ -241,8 +239,6 @@ def display_results(df_summary: pd.DataFrame, title: str):
 
 def main():
     """Main function to run all three analysis pipelines."""
-    # MODIFICATION: Ensure nested results directory exists
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     df_dev, df_train, idx_to_emotion_map = load_and_prepare_data()
 
@@ -253,27 +249,17 @@ def main():
 
     # --- 1. Run analysis on the COMPLETE dev set ---
     df_summary_all, results_dict_all = run_analysis_pipeline(cache_paths, df_dev, idx_to_emotion_map)
-    if save_results:
-        save_as_json(RESULTS_DIR / "retrieval_analysis_all_emotions_dev.json", results_dict_all)
-        print(f"✅ Saved full analysis results to {RESULTS_DIR / 'retrieval_analysis_all_emotions_dev.json'}")
     display_results(df_summary_all, "Performance (Final Utterance Emotion)")
 
     # --- 2. Run analysis EXCLUDING 'neutral' ---
     df_dev_no_neutral = df_dev[df_dev['mapped_emotion'] != 'neutral'].copy()
     df_summary_no_neutral, results_dict_no_neutral = run_analysis_pipeline(cache_paths, df_dev_no_neutral,
                                                                            idx_to_emotion_map)
-    if save_results:
-        save_as_json(RESULTS_DIR / "retrieval_analysis_no_neutral_dev.json", results_dict_no_neutral)
-        print(f"✅ Saved no-neutral analysis results to {RESULTS_DIR / 'retrieval_analysis_no_neutral_dev.json'}")
     display_results(df_summary_no_neutral, "Performance (Final Utterance, Excl. 'neutral')")
 
     # --- 3. Run analysis based on PREDOMINANT emotion ---
     df_summary_predominant, results_dict_predominant = run_analysis_pipeline_predominant(cache_paths, df_dev, df_train,
                                                                                          idx_to_emotion_map)
-    if save_results:
-        save_as_json(RESULTS_DIR / "retrieval_analysis_predominant_emotion_dev.json", results_dict_predominant)
-        print(
-            f"✅ Saved predominant emotion analysis results to {RESULTS_DIR / 'retrieval_analysis_predominant_emotion_dev.json'}")
     display_results(df_summary_predominant, "Performance (Based on Predominant Emotion)")
 
 

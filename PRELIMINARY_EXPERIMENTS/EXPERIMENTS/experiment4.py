@@ -1,4 +1,4 @@
-import llm_code_eval
+from PRELIMINARY_EXPERIMENTS import llm_code_eval
 
 
 def get_updated_config(config, dataset, speaker_characteristics_prompt):
@@ -21,13 +21,17 @@ config = {
     "save": True,
     "prompt_type": "gemini",
     "speaker_characteristics": None,
-    "experiment_id": 4
+    "experiment_id": "4a"
 }
 
 datasets = ["meld", "iemocap"]
 speaker_characteristic_prompts = ["default", "alt1", "alt2"]
 
 config_list = []
+
+print("=" * 80)
+print(f"Start with Experiment 4a")
+config["experiment_id"] = "4a"
 
 for dataset in datasets:
     for speaker_characteristic_prompt in speaker_characteristic_prompts:
@@ -38,6 +42,10 @@ for config in config_list:
     llm_code_eval.main(config)
 
 
+
+print("=" * 80)
+print(f"Start with Experiment 4b")
+config["experiment_id"] = "4b"
 
 config["experiment_id"] = "4b"
 config["speaker_characteristics"] = "default-no-audio"

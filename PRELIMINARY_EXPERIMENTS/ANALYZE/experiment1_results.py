@@ -4,19 +4,14 @@ from glob import glob
 import pandas as pd
 import numpy as np
 
-utils.chdir_in_project("ANALYZE")
-utils.PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+# utils.chdir_in_project("ANALYZE")
+# utils.PROJECT_PATH = "/"
 
 def run_experiment1(experiment_id):
     if experiment_id not in ['a', 'b']:
         raise ValueError("id must be either 'a' or 'b'")
     results = {k:{} for k in ["default", "gemini", "claude", "gpt5"]}
     for test_path in glob(f"../EVAL_RESULTS/Experiment1{experiment_id}/*.json"):
-        if test_path == '../EVAL_RESULTS/Experiment1b/MELD-model3_gemini_k12_single_n1_m1.json':
-            results['gemini'][f"meld-(1,1)"] = 0.58
-            # results2['gemini'][f"meld-(1,1)"] = np.nan
-
-            continue
         test_info = utils.load_json(path=test_path)["test_info"]
         config = test_info["config"]
 

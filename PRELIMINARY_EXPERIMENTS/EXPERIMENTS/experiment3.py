@@ -1,4 +1,4 @@
-import llm_code_eval
+from PRELIMINARY_EXPERIMENTS import llm_code_eval
 
 
 def get_updated_config(config, dataset, max_k):
@@ -20,7 +20,7 @@ config = {
     "split": "dev",
     "save": True,
     "prompt_type": "gemini",
-    "experiment_id": 3
+    "experiment_id": "3a"
 }
 
 datasets = ["iemocap", "meld"]
@@ -28,6 +28,9 @@ k_values = [0, 1, 3, 5, 7, 10, 12, 15, 17, 20]
 
 config_list = []
 
+print("=" * 80)
+print(f"Start with Experiment 3a")
+config["experiment_id"] = "3a"
 for dataset in datasets:
     for k in k_values:
         c = get_updated_config(config, dataset, k)

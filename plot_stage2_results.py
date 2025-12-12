@@ -22,7 +22,7 @@ plt.rcParams.update({
 BASE_PATH = "EVAL_FINAL/STAGE1_2-DEFAULT-r16"
 
 # The names of the 3 model folders
-MODELS = ["BOTH", "MELD", "IEMOCAP"]
+MODELS = ["COMBINED", "MELD-Only", "IEMOCAP-Only"]
 
 # The datasets evaluated
 EVAL_DATASETS = ["MELD", "IEMOCAP"]

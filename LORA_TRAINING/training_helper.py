@@ -18,8 +18,8 @@ def get_base_parser():
 
     # --- Path Arguments ---
     parser.add_argument(
-        '--dataset', type=str, default="both", choices=['iemocap', 'meld', 'both'],
-        help='Dataset to use. "both" will combine IEMOCAP and MELD.'
+        '--dataset', type=str, default="both", choices=['iemocap', 'meld', 'combined'],
+        help='Dataset to use. "combined" will combine IEMOCAP and MELD.'
     )
     parser.add_argument(
         '--iemocap_data_path', type=str, default=None,
@@ -119,9 +119,9 @@ class BaseTrainer:
         if args.stage1_adapter_path:
             args.stage1_adapter_path = os.path.join(utils.PROJECT_PATH, args.stage1_adapter_path)
 
-        # Handle 'both' aliases
+        # Handle 'combined' aliases
         # if args.dataset in ['both', 'general', 'union']:
-        #     args.dataset = 'both'
+        #     args.dataset = 'combined'
 
         # Auto-generate output_dir if not provided
         if args.output_dir is None:
@@ -285,7 +285,7 @@ class BaseTrainer:
     def prepare_tokenized_datasets(self):
         """
         High-level helper:
-          1. Build raw datasets (MELD/IEMOCAP/both)
+          1. Build raw datasets (MELD/IEMOCAP/COMBINED)
           2. Map tokenization + label masking
           3. Print sizes and return tokenized DatasetDict
         """

@@ -3,15 +3,14 @@ from glob import glob
 import pandas as pd
 
 utils.set_pandas_display_options()
-utils.chdir_in_project("ANALYZE")
-utils.PROJECT_PATH = "/Users/yusuf/LLM-for-ERC"
+
 
 pd.options.display.float_format = "{:.3f}".format
 
 
 results = {k: {} for k in ['meld', 'iemocap']}
 
-for test_path in glob("../EVAL_RESULTS/Experiment4/*.json"):
+for test_path in glob("../EVAL_RESULTS/Experiment4a/*.json"):
     test_info = utils.load_json(path=test_path)["test_info"]
     config = test_info["config"]
 
