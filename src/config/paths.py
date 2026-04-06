@@ -1,0 +1,36 @@
+from pathlib import Path
+
+# Adapt this part based on where you downloaded the raw data
+MELD_RAW_DATA_DIR = "/Users/yusuf/Data/MELD.Raw"
+IEMOCAP_RAW_DATA_DIR = "/Users/yusuf/Data/IEMOCAP_full_release"
+
+# No need to change these
+PROJECT_PATH = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_PATH / "data"
+BENCHMARK_DATA_DIR = DATA_DIR / "benchmark"
+
+MELD_BENCHMARK_DATA_DIR = BENCHMARK_DATA_DIR / "meld"
+IEMOCAP_BENCHMARK_DATA_DIR = BENCHMARK_DATA_DIR / "iemocap"
+
+MELD_BENCHMARK_STAGE1_FILE_PATH = MELD_BENCHMARK_DATA_DIR / "meld_erc_init.csv"
+MELD_BENCHMARK_STAGE2_FILE_PATH = MELD_BENCHMARK_DATA_DIR / "meld_erc_with_audio.csv"
+MELD_BENCHMARK_FINAL_FILE_PATH = MELD_BENCHMARK_DATA_DIR / "meld_erc_final.csv"
+IEMOCAP_BENCHMARK_STAGE1_FILE_PATH = IEMOCAP_BENCHMARK_DATA_DIR / "iemocap_erc_init.csv"
+IEMOCAP_BENCHMARK_STAGE2_FILE_PATH = IEMOCAP_BENCHMARK_DATA_DIR / "iemocap_erc_with_audio.csv"
+IEMOCAP_BENCHMARK_FINAL_FILE_PATH = IEMOCAP_BENCHMARK_DATA_DIR / "iemocap_erc_final.csv"
+
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+TRAINING_DATA_DIR = DATA_DIR / "training"
+TRAINING_STAGE1_DIR = TRAINING_DATA_DIR / "stage1"
+TRAINING_STAGE2_DIR = TRAINING_DATA_DIR / "stage2"
+
+ARTIFACTS_DIR = PROJECT_PATH / "artifacts"
+EVAL_STAGE1_DIR = ARTIFACTS_DIR / "eval" / "stage1"
+EVAL_STAGE2_DIR = ARTIFACTS_DIR / "eval" / "stage2"
+SPEAKER_CHARACTERISTICS_DIR = ARTIFACTS_DIR / "speaker_chars"
+
+
+VECTORSTORE_DIR = ARTIFACTS_DIR / "vectorstores"
+VECTORSTORE_DB_DIR = VECTORSTORE_DIR / "db"
+VECTORSTORE_CACHE_DIR = VECTORSTORE_DIR / "caches"
+VECTORSTORE_INDEX_PATH = VECTORSTORE_DIR / "utterance_index_mapping.json"

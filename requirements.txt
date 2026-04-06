@@ -1,1 +1,16 @@
-langchain-google-vertexai
+chromadb==1.5.5
+datasets==4.3.0
+evaluate==0.4.6
+langchain_chroma==1.1.0
+langchain_core==1.2.26
+langchain_google_vertexai==3.2.2
+langchain_huggingface==1.2.1
+langchain_ollama==1.0.1
+numpy==2.4.4
+pandas==3.0.2
+parselmouth==1.1.1
+peft==0.17.1
+scikit_learn==1.8.0
+torch==2.8.0
+tqdm==4.67.1
+transformers==4.57.0
