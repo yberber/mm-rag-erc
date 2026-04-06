@@ -1,3 +1,21 @@
+"""Extend the IEMOCAP benchmark CSV with Parselmouth acoustic features.
+
+Reads the stage-1 IEMOCAP CSV (output of ``init_iemocap_dataset``), locates
+the WAV file for every utterance in the original IEMOCAP directory tree, and
+computes the same seven acoustic features as the MELD counterpart:
+intensity (mean/std), pitch (mean/std/range), articulation rate, and mean HNR.
+
+Unlike the MELD version this script raises ``FileNotFoundError`` immediately
+when a WAV is missing, because IEMOCAP audio paths are deterministic.
+
+Usage::
+
+    python -m src.data_processing.iemocap.add_audio_features_iemocap \\
+        --csv  data/benchmark/iemocap/iemocap_erc_init.csv \\
+        --root /path/to/IEMOCAP_full_release \\
+        --out  data/benchmark/iemocap/iemocap_erc_with_audio.csv
+"""
+
 import argparse
 from pathlib import Path
 from typing import Dict, Optional
@@ -13,6 +31,19 @@ from src.config import paths
 
 
 def compute_features(sound_path: Path) -> Dict[str, Optional[float]]:
+    """Compute acoustic features for a single WAV file using Parselmouth.
+
+    Args:
+        sound_path (Path): Path to the WAV audio file.
+
+    Returns:
+        Dict[str, Optional[float]]: Dictionary with keys
+            ``intensity_mean_db``, ``intensity_std_db``, ``pitch_mean_hz``,
+            ``pitch_std_hz``, ``pitch_range_hz``,
+            ``articulation_rate_syll_per_s``, ``hnr_mean_db``.
+            Values are ``float`` or ``nan`` when the feature cannot be
+            computed (e.g. unvoiced audio).
+    """
 
     snd = pm.Sound(str(sound_path))
 
@@ -60,6 +91,18 @@ def compute_features(sound_path: Path) -> Dict[str, Optional[float]]:
 
 
 def audio_path_for_row(root: Path, session: str, dialog_id: str, turn_id: str) -> Path:
+    """Construct the expected WAV path for an IEMOCAP utterance.
+
+    Args:
+        root (Path): IEMOCAP root directory.
+        session (str): Session name (e.g. ``"Session1"``).
+        dialog_id (str): Dialogue ID (e.g. ``"Ses01F_impro01"``).
+        turn_id (str): Turn ID (e.g. ``"Ses01F_impro01_F000"``).
+
+    Returns:
+        Path: Expected path following the IEMOCAP directory convention:
+            ``<root>/<session>/sentences/wav/<dialog_id>/<turn_id>.wav``.
+    """
     return root / session / "sentences" / "wav" / dialog_id / f"{turn_id}.wav"
 
 

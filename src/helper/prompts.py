@@ -1,3 +1,33 @@
+"""LangChain prompt templates for emotion recognition and speaker-characteristic extraction.
+
+This module defines all prompt templates used across training, evaluation, and
+inference.  Each template is available in two forms:
+
+1. A raw string constant (``*_TEMPLATE``) for direct string formatting.
+2. A :class:`~langchain_core.prompts.prompt.PromptTemplate` object
+   (``*_PROMPT``) for use in LangChain chains.
+
+Emotion-recognition prompts
+----------------------------
+Multiple variants are provided to support ablation studies:
+
+- **Full** (RAG + audio): ``EMOTION_RECOGNITION_FINAL_PROMPT``
+- **No RAG**: ``EMOTION_RECOGNITION_FINAL_PROMPT_NO_RAG``
+- **No audio**: ``EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO``
+- **No RAG + no audio**: ``EMOTION_RECOGNITION_FINAL_PROMPT_NO_AUDIO_RAG``
+- Model-specific variants: ``GEMINI_*``, ``CLAUDE_*``, ``GPT5_*``
+
+Speaker-characteristic extraction prompts
+------------------------------------------
+Used during Phase 1 training-data creation to generate contextual
+commonsense descriptions of a speaker's state:
+
+- ``SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT`` (default — listener reaction)
+- ``SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT1`` (mental state/behaviour)
+- ``SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_ALT2`` (speaker intention/reason)
+- ``SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT_NO_AUDIO`` (no audio features)
+"""
+
 from langchain_core.prompts.prompt import PromptTemplate
 
 

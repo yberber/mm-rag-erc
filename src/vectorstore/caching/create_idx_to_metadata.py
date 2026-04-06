@@ -1,3 +1,22 @@
+"""Create the utterance-index-to-metadata JSON used by the demonstration formatter.
+
+Combines the final MELD and IEMOCAP DataFrames, anonymises speaker names,
+and saves a JSON-indexed DataFrame to
+``artifacts/vectorstores/utterance_index_mapping.json``.
+
+The resulting file is loaded by
+:meth:`~src.helper.build_prompting_dataset.DemonstrationCreatorViaCache.get_idx_to_speaker_utterance_emotion_df`
+to look up the speaker, utterance text, and mapped emotion for each retrieved
+demonstration index.
+
+Must be run after both ``extend_meld_categories`` and
+``extend_iemocap_categories`` have produced the final benchmark CSVs.
+
+Usage::
+
+    python -m src.vectorstore.caching.create_idx_to_metadata
+"""
+
 import os
 
 import pandas as pd

@@ -1,3 +1,20 @@
+"""Batch evaluation script for Phase 1 (speaker-characteristic extraction).
+
+Loads a base model and an optional LoRA adapter, generates speaker-
+characteristic descriptions for the Phase 1 JSONL data, and evaluates
+quality with BERTScore, ROUGE, and BLEU metrics (since Phase 1 output is
+free-form text, not a classification label).
+
+Results are saved to ``artifacts/eval/stage1/`` structured by adapter path
+and split.
+
+Usage::
+
+    python -m src.training.stage1_eval_parallel \\
+        --adapter_path artifacts/finetuning/STAGE1-DEFAULT-r16/BOTH/QLORA/final_checkpoint \\
+        --split dev --dataset both [--limit 100]
+"""
+
 import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
@@ -244,6 +261,17 @@ def build_output_path(args):
 
 
 def compute_metrics(predictions, references):
+    """Compute BERTScore, ROUGE, and BLEU metrics for Phase 1 evaluation.
+
+    Args:
+        predictions (list[str]): Model-generated output strings.
+        references (list[str]): Ground-truth target strings.
+
+    Returns:
+        dict: Metric dict with keys ``bertscore_f1``, ``bertscore_precision``,
+            ``bertscore_recall``, ``rouge1``, ``rouge2``, ``rougeL``,
+            and ``bleu``.
+    """
     print("Loading metrics (BERTScore, ROUGE, BLEU)...")
 
     # 1. BERTScore (Semantic Similarity)

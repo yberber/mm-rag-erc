@@ -1,3 +1,25 @@
+"""Extend the MELD benchmark CSV with Parselmouth acoustic features.
+
+Reads the stage-1 MELD CSV (output of ``init_meld_dataset``), locates the
+corresponding WAV file for every utterance, and computes seven low-level
+acoustic features using Parselmouth/Praat:
+
+- Mean and std intensity (dB)
+- Mean, std, and range of fundamental frequency / pitch (Hz)
+- Articulation rate (syllables per second of phonation time)
+- Mean harmonics-to-noise ratio (dB)
+
+The enriched CSV is written to the stage-2 path defined in
+``src/config/paths``.
+
+Usage::
+
+    python -m src.data_processing.meld.add_audio_features_meld \\
+        --csv  data/benchmark/meld/meld_erc_init.csv \\
+        --root /path/to/MELD.Raw \\
+        --out  data/benchmark/meld/meld_erc_with_audio.csv
+"""
+
 import argparse
 from pathlib import Path
 from typing import Dict, Optional
@@ -14,6 +36,19 @@ import warnings
 
 
 def compute_features(sound_path: Path) -> Dict[str, Optional[float]]:
+    """Compute acoustic features for a single WAV file using Parselmouth.
+
+    Args:
+        sound_path (Path): Path to a WAV audio file.
+
+    Returns:
+        Dict[str, Optional[float]]: Dictionary with keys:
+            ``intensity_mean_db``, ``intensity_std_db``, ``pitch_mean_hz``,
+            ``pitch_std_hz``, ``pitch_range_hz``,
+            ``articulation_rate_syll_per_s``, ``hnr_mean_db``.
+            Values are ``float`` or ``nan`` when the feature cannot be
+            computed (e.g. unvoiced audio).
+    """
 
     snd = pm.Sound(str(sound_path))
 
@@ -60,6 +95,17 @@ def compute_features(sound_path: Path) -> Dict[str, Optional[float]]:
 
 
 def split_to_folder(split_value: str) -> str:
+    """Map a split name to the corresponding MELD audio subfolder name.
+
+    Args:
+        split_value (str): Split label (``"train"``, ``"dev"``, or
+            ``"test"``).
+
+    Returns:
+        str: The audio subdirectory name inside the MELD root, e.g.
+            ``"train_audio_splits"``.  Defaults to ``"dev_audio_splits"``
+            for unrecognised values.
+    """
     s = str(split_value).strip().lower()
     if s in {"train"}:
         return "train_audio_splits"
@@ -72,6 +118,18 @@ def split_to_folder(split_value: str) -> str:
 
 
 def audio_path_for_row(root: Path, split: str, dialog_id: int, turn_id: int) -> Path:
+    """Construct the expected WAV path for a MELD utterance.
+
+    Args:
+        root (Path): MELD raw-data root directory.
+        split (str): Dataset split (``"train"``, ``"dev"``, or ``"test"``).
+        dialog_id (int): MELD dialogue ID.
+        turn_id (int): MELD utterance/turn ID within the dialogue.
+
+    Returns:
+        Path: Expected path to the WAV file, e.g.
+            ``<root>/audio/train_audio_splits/dia3_utt5.wav``.
+    """
     folder = split_to_folder(split)
     fname = f"dia{int(dialog_id)}_utt{int(turn_id)}.wav"
     return root / "audio" / folder / fname

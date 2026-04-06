@@ -1,3 +1,22 @@
+"""Add categorical audio-feature columns to the IEMOCAP benchmark CSV.
+
+Mirrors ``extend_meld_categories`` for IEMOCAP: reads the stage-2 CSV,
+fits quantile thresholds on the training split, and assigns ordered labels
+(``low`` / ``medium`` / ``high``) for intensity, pitch, and articulation
+rate.  Pitch thresholds are computed separately for male (``M``) and female
+(``F``) speakers.
+
+Also maps raw emotion strings to the unified label set (``mapped_emotion``)
+and adds a composite ``idx`` key (``"i_<dialog_idx>_<turn_idx>"``).
+
+Usage::
+
+    python -m src.data_processing.iemocap.extend_iemocap_categories \\
+        --csv_in  data/benchmark/iemocap/iemocap_erc_with_audio.csv \\
+        --csv_out data/benchmark/iemocap/iemocap_erc_final.csv \\
+        --categories 3
+"""
+
 import argparse
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple

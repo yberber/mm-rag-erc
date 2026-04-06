@@ -1,3 +1,21 @@
+"""Parse and consolidate the raw MELD CSV files into a single standardised CSV.
+
+The MELD dataset ships as three separate CSV files (train/dev/test).  This
+script reads all three, harmonises column names, infers speaker gender from a
+hard-coded character list, cleans special characters in the utterance text, and
+adds two derived integer identifiers:
+
+- ``dialog_idx``: a zero-based global dialogue index that is unique and
+  contiguous across splits (train → dev → test).
+- ``turn_idx``: a zero-based per-dialogue turn counter.
+
+Usage::
+
+    python -m src.data_processing.meld.init_meld_dataset \\
+        --root /path/to/MELD.Raw \\
+        --out  data/benchmark/meld/meld_erc_init.csv
+"""
+
 import argparse
 from pathlib import Path
 from typing import List, Optional
@@ -49,6 +67,14 @@ female_characters = [
 
 # Create a gender mapping function
 def get_gender(speaker: str) -> str:
+    """Return the gender code for a MELD speaker name.
+
+    Args:
+        speaker (str): Speaker name as it appears in the MELD CSV.
+
+    Returns:
+        str: ``"M"`` for male, ``"F"`` for female, or ``"U"`` for unknown.
+    """
     s_clean = speaker.strip()
     if s_clean in male_characters:
         return "M"
@@ -57,6 +83,18 @@ def get_gender(speaker: str) -> str:
     return "U"
 
 def read_split(root: Path, split: str) -> pd.DataFrame:
+    """Load one split CSV from the MELD raw-data directory.
+
+    Args:
+        root (Path): Path to the MELD root folder containing
+            ``train_sent_emo.csv``, ``dev_sent_emo.csv``, and
+            ``test_sent_emo.csv``.
+        split (str): One of ``"train"``, ``"dev"``, or ``"test"``.
+
+    Returns:
+        pd.DataFrame: Raw DataFrame for the requested split with an
+            additional ``"split"`` column indicating the split name.
+    """
     filename = {
         "train": "train_sent_emo.csv",
         "dev": "dev_sent_emo.csv",
@@ -68,6 +106,12 @@ def read_split(root: Path, split: str) -> pd.DataFrame:
 
 
 def clean_special_characters(df: pd.DataFrame):
+    """Replace known Unicode artefacts in the ``"utterance"`` column in-place.
+
+    Args:
+        df (pd.DataFrame): DataFrame whose ``"utterance"`` column will be
+            cleaned.  Modified in-place.
+    """
     special_char_conversion_pairs = [('', "'"), ('', ""), ('', ""),
                                      ('', ""), ('', " "), ('', " ")]
     for pair in special_char_conversion_pairs:
@@ -75,6 +119,25 @@ def clean_special_characters(df: pd.DataFrame):
 
 
 def build_meld_dataframe(root: Path) -> pd.DataFrame:
+    """Build the consolidated MELD DataFrame from all three split files.
+
+    Reads train/dev/test CSVs, validates required columns, adds gender,
+    cleans utterances, and computes ``dialog_idx`` and ``turn_idx``.
+
+    Args:
+        root (Path): Path to the MELD root folder (must contain
+            ``train_sent_emo.csv``, ``dev_sent_emo.csv``,
+            ``test_sent_emo.csv``).
+
+    Returns:
+        pd.DataFrame: Unified DataFrame with columns:
+            ``split``, ``season``, ``episode``, ``dialog_id``,
+            ``dialog_idx``, ``turn_id``, ``turn_idx``, ``speaker``,
+            ``gender``, ``emotion``, ``utterance``.
+
+    Raises:
+        ValueError: If any required column is missing from the raw CSVs.
+    """
     dfs: List[pd.DataFrame] = [read_split(root, s) for s in ("train", "dev", "test")]
     raw = pd.concat(dfs, ignore_index=True)
 

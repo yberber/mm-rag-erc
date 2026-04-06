@@ -1,3 +1,25 @@
+"""Add categorical audio-feature columns to the MELD benchmark CSV.
+
+Reads the stage-2 MELD CSV (output of ``add_audio_features_meld``), fits
+quantile-based thresholds on the training split, and assigns every row a
+label in ``{low, medium, high}`` (or 2 / 5 bins) for:
+
+- ``intensity_level`` — derived from ``intensity_mean_db``
+- ``pitch_level``     — derived from ``pitch_mean_hz`` (gender-stratified)
+- ``rate_level``      — derived from ``articulation_rate_syll_per_s``
+
+Additionally maps raw emotion strings to a unified label set
+(``mapped_emotion``) and adds a composite ``idx`` key
+(``"m_<dialog_idx>_<turn_idx>"``).
+
+Usage::
+
+    python -m src.data_processing.meld.extend_meld_categories \\
+        --csv_in  data/benchmark/meld/meld_erc_with_audio.csv \\
+        --csv_out data/benchmark/meld/meld_erc_final.csv \\
+        --categories 3
+"""
+
 import argparse
 from pathlib import Path
 from typing import Dict, List, Sequence
@@ -58,12 +80,31 @@ def parse_args() -> argparse.Namespace:
 
 
 def _safe_values(series: pd.Series) -> np.ndarray:
+    """Convert a Series to a finite-only float array, dropping NaNs and infs.
+
+    Args:
+        series (pd.Series): Numeric series, possibly containing non-numeric
+            values or missing data.
+
+    Returns:
+        np.ndarray: 1-D array of finite float values.
+    """
     vals = pd.to_numeric(series, errors="coerce").to_numpy()
     vals = vals[np.isfinite(vals)]
     return vals
 
 
 def quantile_thresholds(values: np.ndarray, qs: Sequence[float]) -> List[float]:
+    """Compute a list of quantile values from an array.
+
+    Args:
+        values (np.ndarray): 1-D array of finite values.
+        qs (Sequence[float]): Quantile fractions in [0, 1].
+
+    Returns:
+        List[float]: Quantile values corresponding to ``qs``.  Returns an
+            empty list if ``values`` is empty.
+    """
     if values.size == 0:
         return []
     return [float(np.quantile(values, q)) for q in qs]
@@ -87,6 +128,15 @@ def digitize_labels(values: pd.Series, thresholds: Sequence[float], labels: Sequ
 
 
 def labels_for(n: int) -> List[str]:
+    """Return ordered label names for a given number of bins.
+
+    Args:
+        n (int): Number of categories (2, 3, or 5).
+
+    Returns:
+        List[str]: Ordered list of label strings, e.g.
+            ``["low", "medium", "high"]`` for ``n=3``.
+    """
     if n == 2:
         return ["low", "high"]
     if n == 3:

@@ -1,3 +1,19 @@
+"""Build the conversational-flow ChromaDB vector store for RAG retrieval.
+
+Each document in this store is a sliding window of consecutive utterances
+ending at the target turn.  Similarity is therefore computed at the
+conversation-flow level rather than the single-utterance level, which
+captures the emotional context of the dialogue leading up to the target.
+
+The window size (number of utterances) is set via ``--num_utterances``
+and stored in the collection name, e.g. ``meld_iemocap_flow_7``.
+
+Usage::
+
+    python -m src.vectorstore.generators.build_flow_vectorstore \\
+        --num_utterances 7
+"""
+
 import pandas as pd
 import argparse
 import os

@@ -1,3 +1,20 @@
+"""Build the single-utterance ChromaDB vector store for RAG retrieval.
+
+Each document in this store corresponds to one training utterance.
+Similarity search is performed at the utterance level — the most
+semantically similar individual utterances are returned as demonstrations.
+
+This is the simplest of the three vector-store variants and serves as the
+baseline for the RAG ablation studies.
+
+Run after both ``extend_meld_categories`` and ``extend_iemocap_categories``
+have produced the final benchmark CSVs.
+
+Usage::
+
+    python -m src.vectorstore.generators.build_single_vectorstore
+"""
+
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm

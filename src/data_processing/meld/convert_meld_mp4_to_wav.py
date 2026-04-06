@@ -1,3 +1,23 @@
+"""Convert MELD MP4 video files to mono 16 kHz WAV audio files.
+
+MELD distributes its media as MP4 files split across ``train_splits/``,
+``dev_splits/``, and ``test_splits/``.  This script calls ``ffmpeg`` to
+strip the audio track from each MP4 and write a WAV file to a parallel
+``audio/`` directory (``train_audio_splits/``, etc.) that is required by
+``add_audio_features_meld``.
+
+A special case is handled for the test split: when a ``final_videos_test``
+version of a clip exists it is preferred over the original, because those
+files contain corrected audio.
+
+Usage::
+
+    python -m src.data_processing.meld.convert_meld_mp4_to_wav \\
+        --root /path/to/MELD.Raw [--overwrite]
+
+Requires ``ffmpeg`` to be installed and available on ``PATH``.
+"""
+
 import argparse
 import subprocess
 from pathlib import Path
@@ -16,6 +36,19 @@ SPLITS = [
 
 
 def collect_mp4_jobs(root: Path) -> List[Tuple[Path, Path]]:
+    """Collect all (source MP4, target WAV) conversion jobs for MELD.
+
+    For the test split, prefers ``final_videos_test<stem>.mp4`` over the
+    plain ``dia*.mp4`` when the final version exists.
+
+    Args:
+        root (Path): MELD root directory containing ``train_splits/``,
+            ``dev_splits/``, and ``test_splits/`` subdirectories.
+
+    Returns:
+        List[Tuple[Path, Path]]: List of ``(mp4_path, wav_path)`` pairs
+            ready to be passed to :func:`ffmpeg_to_wav`.
+    """
     jobs: List[Tuple[Path, Path]] = []
     for in_name, out_name in SPLITS:
         in_split = root / in_name
@@ -50,6 +83,17 @@ def collect_mp4_jobs(root: Path) -> List[Tuple[Path, Path]]:
 
 
 def ffmpeg_to_wav(src: Path, dst: Path, overwrite: bool = False) -> int:
+    """Convert a single MP4 to a mono 16 kHz WAV via ffmpeg.
+
+    Args:
+        src (Path): Source MP4 file.
+        dst (Path): Destination WAV file path.
+        overwrite (bool): If ``True``, pass ``-y`` to ffmpeg to overwrite
+            existing files.  Defaults to ``False``.
+
+    Returns:
+        int: ffmpeg process return code (``0`` on success).
+    """
     # Build ffmpeg command: mono, 16 kHz, wav container; no video
     args = [
         "ffmpeg",

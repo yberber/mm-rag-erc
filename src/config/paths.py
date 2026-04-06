@@ -1,3 +1,11 @@
+"""Centralised path configuration for the project.
+
+All directory and file paths used across the codebase are defined here.
+Edit the two raw-data variables at the top to point to wherever you stored
+the MELD and IEMOCAP downloads; everything else is derived automatically
+relative to the project root.
+"""
+
 from pathlib import Path
 
 # Adapt this part based on where you downloaded the raw data

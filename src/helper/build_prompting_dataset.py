@@ -1,3 +1,32 @@
+"""Build the Phase-2 prompting dataset with RAG demonstrations.
+
+For each utterance in the benchmark datasets this module:
+
+1. Retrieves the top-N most similar examples from a pre-built ChromaDB
+   vector store (via a pre-computed similarity cache for efficiency).
+2. Formats the retrieved examples as demonstration text using
+   :class:`DemonstrationCreatorViaCache`.
+3. Assembles the full prompt input including conversation history,
+   audio features, speaker ID, and candidate emotions.
+
+The result is a dataset dict ``{"train": [...], "dev": [...], "test": [...]}``
+where each element contains ``input`` (prompt fields), ``target`` (gold
+emotion), and ``idx`` (unique utterance identifier).
+
+Three vector-store types are supported (controlled by ``db_type``):
+
+- ``"single"`` — one utterance per document, similarity is utterance-level.
+- ``"flow"``   — a sliding window of consecutive utterances per document.
+- ``"hybrid"`` — same as flow but the target utterance is repeated to up-weight it.
+
+Usage::
+
+    python -m src.helper.build_prompting_dataset \\
+        --dataset iemocap --max_k 20 --top_n 2 \\
+        --vectordb_path artifacts/vectorstores/db/meld_iemocap_hybrid_7 \\
+        --use_detailed_example true --example_refinement_level 1
+"""
+
 import argparse
 from pathlib import Path
 
@@ -10,6 +39,24 @@ from src.config import paths
 DEFAULT_VECTORSTORE_PATH = str(paths.VECTORSTORE_DB_DIR / "meld_iemocap_single")
 
 class DemonstrationCreatorViaCache:
+    """Retrieves and formats RAG demonstration examples from a similarity cache.
+
+    Loads a pre-computed JSON cache mapping each utterance index to an
+    ordered list of similar utterance indices, then formats the top-N
+    examples as demonstration text for the emotion-recognition prompt.
+
+    Args:
+        vectordb_path (str | Path): Path to the ChromaDB vector store used
+            to generate the cache.
+        top_n (int): Number of demonstration examples to include.
+        use_detailed_example (bool): If ``True``, include per-utterance
+            emotion labels inside each flow/hybrid demonstration.
+        example_refinement_level (int): 0 = no refinement; 1 = retrieve
+            examples from the same dataset only.
+        valid_emotion_set (set[str], optional): Restrict demonstrations to
+            these emotion labels when ``use_detailed_example`` is ``True``.
+    """
+
     def __init__(self, vectordb_path, top_n=1, use_detailed_example=False, example_refinement_level=0, valid_emotion_set=None):
 
         self.vectordb_path = Path(vectordb_path)
@@ -35,6 +82,14 @@ class DemonstrationCreatorViaCache:
         return f"{self.db_type}{'V2' if self.use_detailed_example and self.db_type in ['flow', 'hybrid'] else ''}_n{self.top_n}_m{self.max_m}"
 
     def get_demonstration_text_via_idx(self, idx):
+        """Return formatted demonstration text for a given utterance index.
+
+        Args:
+            idx (str): Utterance index key (e.g. ``"m_5_3"``).
+
+        Returns:
+            str: Ready-to-insert demonstration string for the prompt.
+        """
         top_n = self.retrieve_example_idx(idx)
         final_demonstration_text = []
         for ex_idx in top_n:
@@ -57,6 +112,19 @@ class DemonstrationCreatorViaCache:
 
 
     def retrieve_example_idx(self, idx = None):
+        """Retrieve top-N similar example indices from the cache.
+
+        Skips examples from the same dialogue as ``idx`` when
+        ``example_refinement_level > 0``, and filters to the same dataset
+        prefix when set.
+
+        Args:
+            idx (str, optional): The query utterance index.  Used to
+                exclude same-dialogue examples.
+
+        Returns:
+            list[str]: Up to ``self.top_n`` similar utterance index strings.
+        """
         examples_idx = self.cache_data[idx]
 
         top_n = []
@@ -107,6 +175,19 @@ class DemonstrationCreatorViaCache:
 
 
 def create_history_context(conversation, current_utterance_idx, max_k):
+    """Build a conversation-history string for the prompt.
+
+    Args:
+        conversation (pd.DataFrame): Full dialogue DataFrame with
+            ``"speaker"`` and ``"utterance"`` columns.
+        current_utterance_idx (int): Zero-based index of the target turn
+            within the dialogue (inclusive upper bound).
+        max_k (int): Maximum number of prior turns to include.
+
+    Returns:
+        str: Multi-line history string with each line formatted as
+            ``"<speaker>: <utterance>"``.
+    """
     context = ""
     conversation_history = conversation[max(0, current_utterance_idx - max_k):current_utterance_idx+1]
     for unit in conversation_history.to_dict(orient="records"):
@@ -150,6 +231,25 @@ def get_valid_emotion_set_for_examples(dataset, example_refinement_level):
     return valid_emotion_set_for_examples
 
 def process_dataset(dataset="meld", max_k=12, top_n=1, vectordb_path=None, split=None, use_detailed_example=False, save_as="no", example_refinement_level=0):
+    """Build the full prompting dataset for Phase-2 training or evaluation.
+
+    Args:
+        dataset (str): Dataset to process (``"meld"`` or ``"iemocap"``).
+        max_k (int): Conversation-history window size (number of prior turns).
+        top_n (int): Number of RAG demonstration examples per prompt.
+        vectordb_path (str | Path): Path to the ChromaDB vector store.
+        split (str | list[str], optional): Split(s) to process.  ``None``
+            processes all splits.
+        use_detailed_example (bool): Include per-utterance emotion labels
+            in flow/hybrid demonstrations.
+        save_as (str): ``"json"``, ``"jsonl"``, or ``"no"`` (return only).
+        example_refinement_level (int): 0 = no filtering; 1 = same dataset;
+            2 = same dataset with valid emotions only.
+
+    Returns:
+        dict: Dataset dict keyed by split name, each value being a list of
+            dicts with keys ``"input"``, ``"target"``, and ``"idx"``.
+    """
     demonstration_creator = DemonstrationCreatorViaCache(vectordb_path, top_n=top_n, use_detailed_example=use_detailed_example,
                                                          example_refinement_level=example_refinement_level,
                                                          valid_emotion_set=get_valid_emotion_set_for_examples(dataset, example_refinement_level))

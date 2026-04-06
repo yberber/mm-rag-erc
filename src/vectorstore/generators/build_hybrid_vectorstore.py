@@ -1,3 +1,20 @@
+"""Build the hybrid ChromaDB vector store for RAG retrieval.
+
+Extends the flow vector store by appending the target utterance a second
+time at the end of each document under the heading
+``"The target utterance is: …"``.  This repetition up-weights the target
+turn during embedding, producing a similarity space that balances
+contextual flow with utterance-level identity.
+
+The window size is set via ``--num_utterances``; the collection is named
+e.g. ``meld_iemocap_hybrid_7``.
+
+Usage::
+
+    python -m src.vectorstore.generators.build_hybrid_vectorstore \\
+        --num_utterances 7
+"""
+
 import pandas as pd
 import argparse
 import os

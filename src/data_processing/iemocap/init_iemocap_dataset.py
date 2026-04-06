@@ -1,3 +1,25 @@
+"""Parse the raw IEMOCAP annotation files into a single standardised CSV.
+
+IEMOCAP is organised into five sessions, each containing improvised and
+scripted dialogues.  For every dialogue the script reads the emotion
+evaluation file (``EmoEvaluation/*.txt``) and the transcription file
+(``transcriptions/*.txt``), maps short emotion codes to full English labels,
+and sorts utterances by start time to recover conversation order.
+
+Split assignment:
+
+- Sessions 1–4: first 108 dialogues → ``"train"``, remainder → ``"dev"``.
+- Session 5: → ``"test"``.
+
+An ``erc_target`` flag marks the six primary emotions used for evaluation
+(anger, happiness, sadness, neutral, excitement, frustration).
+
+Usage::
+
+    python -m src.data_processing.iemocap.init_iemocap_dataset \\
+        --root /path/to/IEMOCAP_full_release \\
+        --out  data/benchmark/iemocap/iemocap_erc_init.csv
+"""
 
 import argparse  # renamed from create_IEMOCAP_dataset.py
 import re
@@ -55,7 +77,16 @@ class Utterance:
 
 
 def parse_transcriptions(path: Path) -> Dict[str, str]:
-    """Return mapping turn_id -> utterance text."""
+    """Parse an IEMOCAP transcription file into a turn-id → text mapping.
+
+    Args:
+        path (Path): Path to a ``transcriptions/*.txt`` file.
+
+    Returns:
+        Dict[str, str]: Mapping from turn identifier (e.g. ``"Ses01F_impro01_F000"``)
+            to the corresponding utterance text.  Returns an empty dict if the
+            file does not exist.
+    """
     if not path.exists():
         return {}
     out: Dict[str, str] = {}
@@ -69,6 +100,20 @@ def parse_transcriptions(path: Path) -> Dict[str, str]:
 
 
 def parse_emoeval(path: Path) -> List[Dict[str, object]]:
+    """Parse an IEMOCAP emotion-evaluation file into a list of turn records.
+
+    Each non-comment, non-empty line that matches the expected format is
+    parsed into a dict with keys ``turn_id``, ``start``, ``end``, and
+    ``emotion_code``.
+
+    Args:
+        path (Path): Path to an ``EmoEvaluation/*.txt`` annotation file.
+
+    Returns:
+        List[Dict[str, object]]: List of dicts, one per evaluated utterance,
+            with fields ``turn_id`` (str), ``start`` (float), ``end`` (float),
+            and ``emotion_code`` (str).
+    """
     rows: List[Dict[str, object]] = []
     for line in path.read_text(errors="ignore").splitlines():
         line = line.strip()
@@ -90,6 +135,17 @@ def parse_emoeval(path: Path) -> List[Dict[str, object]]:
 
 
 def infer_dialog_meta(dialog_id: str) -> Dict[str, str]:
+    """Infer dialogue type and marker gender from an IEMOCAP dialogue ID.
+
+    Args:
+        dialog_id (str): IEMOCAP dialogue identifier (e.g.
+            ``"Ses01F_impro01"``).
+
+    Returns:
+        Dict[str, str]: Dict with keys ``"dialog_type"`` (``"impro"``,
+            ``"script"``, or ``""``) and ``"marker_gender"`` (the character
+            at index 5 of the ID, typically ``"F"`` or ``"M"``).
+    """
     parts = dialog_id.split("_")
     dialog_type = "impro" if any("impro" in p for p in parts) else ("script" if any("script" in p for p in parts) else "")
     marker_gender = dialog_id[5] if len(dialog_id) > 5 else ""
@@ -97,12 +153,31 @@ def infer_dialog_meta(dialog_id: str) -> Dict[str, str]:
 
 
 def infer_turn_meta(turn_id: str) -> Dict[str, str]:
+    """Extract speaker ID and parent dialogue ID from an IEMOCAP turn ID.
+
+    Args:
+        turn_id (str): Turn identifier (e.g. ``"Ses01F_impro01_F000"``).
+
+    Returns:
+        Dict[str, str]: Dict with keys ``"speaker"`` (first character of the
+            last ``_``-separated token) and ``"dialog_id"`` (all tokens
+            except the last one joined by ``_``).
+    """
     speaker = turn_id.split("_")[-1][0] if "_" in turn_id else ""
     dialog_id = "_".join(turn_id.split("_")[:-1]) if "_" in turn_id else turn_id
     return {"speaker": speaker, "dialog_id": dialog_id}
 
 
 def session_name_from_path(path: Path) -> str:
+    """Return the session directory name (e.g. ``"Session1"``) from a path.
+
+    Args:
+        path (Path): Any path inside an IEMOCAP session directory.
+
+    Returns:
+        str: The path component that starts with ``"Session"``, or ``""`` if
+            none is found.
+    """
     for part in path.parts:
         if part.startswith("Session"):
             return part
@@ -110,6 +185,20 @@ def session_name_from_path(path: Path) -> str:
 
 
 def collect_dialog(dialog_eval: Path, dialog_trans: Optional[Path]) -> List[Utterance]:
+    """Combine emotion-evaluation and transcription data for one dialogue.
+
+    Utterances are sorted by start time so the resulting list reflects the
+    actual conversation order regardless of how lines appear in the file.
+
+    Args:
+        dialog_eval (Path): Path to the ``EmoEvaluation/*.txt`` file.
+        dialog_trans (Optional[Path]): Path to the corresponding
+            ``transcriptions/*.txt`` file, or ``None`` if unavailable.
+
+    Returns:
+        List[Utterance]: Ordered list of :class:`Utterance` dataclass
+            instances for the dialogue.
+    """
     eval_rows = parse_emoeval(dialog_eval)
     trans_map = parse_transcriptions(dialog_trans) if dialog_trans else {}
     session = session_name_from_path(dialog_eval)
@@ -142,6 +231,17 @@ def collect_dialog(dialog_eval: Path, dialog_trans: Optional[Path]) -> List[Utte
 
 
 def iterate_files(root: Path) -> Iterable[tuple[Path, Path]]:
+    """Yield (eval_file, transcription_file) pairs for all IEMOCAP sessions.
+
+    Args:
+        root (Path): IEMOCAP root directory containing ``Session1`` …
+            ``Session5`` subdirectories.
+
+    Yields:
+        tuple[Path, Path]: A pair of paths where the first element is the
+            emotion-evaluation ``.txt`` file and the second is the
+            corresponding transcription ``.txt`` file (which may not exist).
+    """
     for session_dir in sorted(root.glob("Session*")):
         eval_dir = session_dir / "dialog" / "EmoEvaluation"
         tr_dir = session_dir / "dialog" / "transcriptions"
@@ -153,6 +253,22 @@ def iterate_files(root: Path) -> Iterable[tuple[Path, Path]]:
 
 
 def build_dataframe(root: Path) -> pd.DataFrame:
+    """Build the consolidated IEMOCAP DataFrame from all sessions.
+
+    Iterates over all session directories, parses each dialogue, assembles a
+    flat DataFrame, assigns train/dev/test splits, and computes a global
+    ``dialog_idx``.
+
+    Args:
+        root (Path): IEMOCAP root directory (must contain ``Session1`` …
+            ``Session5``).
+
+    Returns:
+        pd.DataFrame: DataFrame with columns: ``split``, ``session``,
+            ``dialog_id``, ``dialog_idx``, ``turn_id``, ``turn_idx``,
+            ``speaker``, ``emotion_code``, ``emotion``, ``erc_target``,
+            ``utterance``, ``dialog_type``, ``gender``.
+    """
     rows: List[Utterance] = []
     for eval_file, tr_file in iterate_files(root):
         rows.extend(collect_dialog(eval_file, tr_file if tr_file.exists() else None))

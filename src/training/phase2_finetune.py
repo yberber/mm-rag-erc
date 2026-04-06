@@ -1,3 +1,26 @@
+"""Phase 2 fine-tuning: emotion recognition with RAG in-context learning.
+
+Builds on the Phase 1 adapter by continuing to train the model for the
+emotion-classification task.  Each training example includes a conversation
+history, audio features, candidate emotion labels, and RAG demonstrations
+retrieved from the hybrid vector store.
+
+The Phase 2 trainer loads the Phase 1 adapter weights via
+``--stage1_adapter_path`` and uses either ``EMOTION_RECOGNITION_FINAL_PROMPT``
+(default) or ``GEMINI_EMOTION_RECOGNITION_PROMPT`` depending on
+``--prompt_type``.
+
+Training data is loaded from the JSONL files produced by
+``src/training_data_creation/phase2/build_dataset.py``, or generated
+on-the-fly if no data paths are provided.
+
+Usage::
+
+    python -m src.training.phase2_finetune \\
+        --stage1_adapter_path artifacts/finetuning/STAGE1-DEFAULT-r16/COMBINED/QLORA/final_checkpoint \\
+        [--dataset iemocap] [--epochs 4] [--lora_r 16] [--use_qlora true]
+"""
+
 import os
 
 from src.helper import utils

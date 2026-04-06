@@ -1,3 +1,21 @@
+"""Assemble the Phase 2 fine-tuning dataset (JSONL) with RAG demonstrations.
+
+Calls :func:`~src.helper.build_prompting_dataset.main` with a fixed
+configuration (hybrid vector store, window size 7, top-2 demonstrations,
+detailed examples, refinement level 1) for each dataset and writes the
+resulting split data as JSONL files to ``data/training/stage2/<DATASET>/``.
+
+Each JSONL line contains the fields ``input`` (all prompt variables),
+``target`` (the gold emotion label), and ``idx``.
+
+Edit the ``TRAINING_SET_CONFIGS`` dict at the top of the file to adjust
+the RAG retrieval parameters before running.
+
+Usage::
+
+    python src/training_data_creation/phase2/build_dataset.py
+"""
+
 import json
 from src.helper import utils, build_prompting_dataset
 from src.config import paths

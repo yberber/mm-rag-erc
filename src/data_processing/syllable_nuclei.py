@@ -62,6 +62,18 @@
 
 
 
+"""Syllable-nucleus detection and speech-rate estimation via Parselmouth/Praat.
+
+Python port of the Praat script "Syllable Nuclei" by Nivja de Jong and
+Ton Wempe (2008), with revisions by Hugo Quené, Ingrid Persoon, and Nivja
+de Jong (2010). Originally translated to Python by David Feinberg (2019).
+
+The main entry point is :func:`speech_rate`, which accepts a path to a WAV
+file and returns a dictionary of prosodic features including syllable count,
+pause count, total duration, phonation time, speech rate, articulation rate,
+and average syllable duration (ASD).
+"""
+
 import math
 import pandas as pd
 import parselmouth
@@ -71,6 +83,34 @@ from parselmouth.praat import call
 
 
 def speech_rate(filename):
+    """Estimate speech-rate features for a single audio file.
+
+    Implements the syllable-nuclei algorithm: intensity peaks that are
+    preceded by a sufficient dip and lie within a voiced region are counted
+    as syllable nuclei.  Silence segments are detected with Praat's
+    "To TextGrid (silences)" command and used to separate speaking time from
+    total duration.
+
+    Args:
+        filename (str): Absolute or relative path to a WAV (or other
+            Parselmouth-readable) audio file.
+
+    Returns:
+        dict: A dictionary with the following keys:
+
+            - ``soundname`` (str): The input filename.
+            - ``nsyll`` (int): Number of voiced syllable nuclei detected.
+            - ``npause`` (int): Number of pauses detected.
+            - ``dur(s)`` (float): Total audio duration in seconds.
+            - ``phonationtime(s)`` (float): Duration of the intensity object
+              (proxy for phonation time) in seconds.
+            - ``speechrate(nsyll / dur)`` (float): Syllables per second over
+              total duration.
+            - ``articulation rate(nsyll / phonationtime)`` (float): Syllables
+              per second over phonation time only.
+            - ``ASD(speakingtime / nsyll)`` (float): Average syllable duration
+              in seconds.
+    """
     silencedb = -25
     mindip = 2
     minpause = 0.3

@@ -1,3 +1,28 @@
+"""Async parallel generation of speaker-characteristic annotations for Phase 1.
+
+Uses an LLM (Ollama, HuggingFace, or VertexAI/Gemini) to generate a short
+commonsense description for each utterance in the dataset — for example, the
+likely reaction of a listener, the speaker's mental state, or the speaker's
+intention.  These descriptions become the training targets for Phase 1
+fine-tuning.
+
+Results are written to ``artifacts/speaker_chars/`` as a JSON file named
+after the dataset, model, prompt type, and dataset size.
+
+The script supports three prompt variants (controlled by ``--prompt_type``):
+
+- ``"default"``        — listener reaction inference
+- ``"alt1"``           — mental-state/behaviour description
+- ``"alt2"``           — speaker-intention inference
+- ``"default-no-audio"`` — listener reaction without audio features
+
+Usage::
+
+    python -m src.training_data_creation.phase1.parallel_character_extraction \\
+        --dataset_name meld --model_id 0 --prompt_type default \\
+        --splits train dev --max_k 20
+"""
+
 import datetime
 
 from tqdm import tqdm
@@ -71,6 +96,18 @@ def parse_arguments():
 
 
 def get_prompt_template(prompt_type):
+    """Return the LangChain prompt template for the given prompt type.
+
+    Args:
+        prompt_type (str): One of ``"default"``, ``"alt1"``, ``"alt2"``,
+            or ``"default-no-audio"``.
+
+    Returns:
+        PromptTemplate: The corresponding prompt template object.
+
+    Raises:
+        ValueError: If ``prompt_type`` is not recognised.
+    """
     match prompt_type:
         case "default":
             return SPEAKER_CHARACTERISTICS_EXTRACTION_PROMPT
@@ -117,6 +154,22 @@ def load_model_via_vertexai(model_id: str = "gemini-2.5-flash-lite", max_output_
 
 
 def create_model_chain(model_id: int, prompt_type: str):
+    """Instantiate the LLM and build the LangChain prompt | model chain.
+
+    Args:
+        model_id (int): Backend selector:
+            0 = Ollama (llama3.1:8b),
+            1 = HuggingFace pipeline (llama3.1-8b),
+            2 = VertexAI Gemini-2.5-flash,
+            3 = VertexAI Gemini-2.5-flash-lite.
+        prompt_type (str): Prompt-template key; passed to
+            :func:`get_prompt_template`.
+
+    Returns:
+        tuple: ``(chain, model, prompt)`` where ``chain`` is the composed
+            LangChain runnable, ``model`` is the LLM instance, and
+            ``prompt`` is the :class:`~langchain_core.prompts.PromptTemplate`.
+    """
     max_output_tokens = 20
     if model_id == 0:
         model = load_model_via_ollama(max_output_tokens=max_output_tokens)
@@ -142,6 +195,18 @@ def create_model_chain(model_id: int, prompt_type: str):
 
 
 def create_history_context(conversation, turn_idx, max_k):
+    """Build the conversation-history string for the Phase 1 prompt.
+
+    Args:
+        conversation (pd.DataFrame): Full dialogue DataFrame with
+            ``"speaker"`` and ``"utterance"`` columns.
+        turn_idx (int): Zero-based index of the target turn (inclusive).
+        max_k (int): Maximum number of prior turns to include.
+
+    Returns:
+        str: Multi-line string with each line formatted as
+            ``"<speaker>: <utterance>"``.
+    """
     context = ""
     conversation_history = conversation[max(0, turn_idx - max_k):turn_idx+1]
     for unit in conversation_history.to_dict(orient="records"):
@@ -150,6 +215,23 @@ def create_history_context(conversation, turn_idx, max_k):
 
 
 def load_and_prepare_dataset(dataset_name, splits=["train", "dev"], limit=None, exclude_na=False, no_audio=False):
+    """Load and format the dataset for Phase 1 speaker-characteristic extraction.
+
+    Args:
+        dataset_name (str): ``"meld"`` or ``"iemocap"``.
+        splits (list[str]): Splits to include (``"train"`` and/or ``"dev"``).
+            The test split is never used in Phase 1.
+        limit (int, optional): Cap total number of samples (across splits).
+        exclude_na (bool): If ``True``, drop rows with missing feature
+            values.  If ``False`` (default), fill NaN audio levels with
+            ``"medium"``.
+        no_audio (bool): If ``True``, omit the ``audio_features`` key from
+            prompt inputs.
+
+    Returns:
+        dict: Dataset dict keyed by split name.  Each value is a list of
+            dicts with keys ``"inputs"``, ``"iden"``, and ``"emo"``.
+    """
     columns_to_retrive = ["split", "dialog_idx", "turn_idx", "speaker", "utterance", "mapped_emotion", "idx", "intensity_level",
          "pitch_level", "rate_level"]
     df = get_dataset_as_dataframe(dataset_name, splits=splits, columns=columns_to_retrive)
@@ -290,6 +372,17 @@ async def generate_characteristics_via_chain(chain, dataset, dataset_name, verbo
 
 
 def rel_path_to_save_results(args, dataset):
+    """Compute the output file path for a speaker-characteristic extraction run.
+
+    Args:
+        args (argparse.Namespace): Parsed arguments including ``dataset_name``,
+            ``model_id``, ``prompt_type``, ``max_k``, and ``splits``.
+        dataset (dict): Dataset dict (used to compute total size).
+
+    Returns:
+        Path: Absolute path for the output JSON file inside
+            ``artifacts/speaker_chars/``.
+    """
     split_text = "train-dev-test" if args.splits is None else "-".join(args.splits)
     dataset_size = np.sum([len(dataset[split]) for split in dataset])
     data_name = f"{args.dataset_name.upper()}-model{args.model_id}_{args.prompt_type}_k{args.max_k}_{split_text}_size{dataset_size}.json"
@@ -297,6 +390,20 @@ def rel_path_to_save_results(args, dataset):
 
 
 def build_execution_info(model, prompt, stats, args, dataset):
+    """Assemble the execution-metadata dict to be saved alongside the results.
+
+    Args:
+        model: The LLM instance (must have a ``.name`` attribute).
+        prompt: The prompt template (must have ``.name`` and ``.template``).
+        stats (dict): Timing statistics returned by
+            :func:`generate_characteristics_via_chain`.
+        args (argparse.Namespace): Parsed arguments.
+        dataset (dict): Dataset dict used to compute per-split lengths.
+
+    Returns:
+        dict: Metadata dict with prompt, model, dataset size, timing, and
+            configuration information.
+    """
     """Build the test information dictionary."""
     info = {
         "prompt_name": prompt.name,

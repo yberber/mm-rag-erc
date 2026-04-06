@@ -1,3 +1,20 @@
+"""Batch evaluation script for Phase 2 (emotion recognition).
+
+Loads a base model and an optional LoRA adapter, runs batched inference
+on the Phase 2 prompting dataset (with RAG demonstrations), and reports
+weighted F1 and accuracy.  Supports ablation modes (no audio, no RAG)
+via ``--use_audio`` and ``--use_rag`` flags.
+
+Results are saved under ``artifacts/eval/stage2/`` in a sub-tree
+organised by ablation condition, adapter path, dataset, and split.
+
+Usage::
+
+    python -m src.training.stage2_eval_parallel \\
+        --adapter_path artifacts/finetuning/STAGE1_2-DEFAULT-r16/.../final_checkpoint \\
+        --dataset iemocap --split test [--use_audio true] [--use_rag true]
+"""
+
 import argparse
 from pathlib import Path
 
@@ -200,8 +217,18 @@ def load_model_and_tokenizer(model_id, use_qlora):
 
 
 def generate_batch(model, tokenizer, prompts, max_new_tokens):
-    """
-    Generates responses for a list of prompts in a single batch.
+    """Generate emotion-label predictions for a batch of prompts.
+
+    Args:
+        model: The loaded causal LM (with optional LoRA adapter merged).
+        tokenizer: The corresponding tokenizer (left-padded for batch
+            inference).
+        prompts (list[str]): List of formatted prompt strings.
+        max_new_tokens (int): Maximum number of tokens to generate per
+            prompt.
+
+    Returns:
+        list[str]: Decoded and stripped output strings, one per prompt.
     """
     model.eval()
 

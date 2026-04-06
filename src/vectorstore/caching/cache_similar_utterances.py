@@ -1,3 +1,26 @@
+"""Pre-compute and cache similarity lookups for all vector stores.
+
+For each utterance in the combined MELD + IEMOCAP benchmark datasets,
+performs a similarity search against a given ChromaDB vector store and
+stores the ranked list of similar training-utterance indices in a JSON file.
+
+This avoids repeated online vector-store queries at training and evaluation
+time — the :class:`~src.helper.build_prompting_dataset.DemonstrationCreatorViaCache`
+class reads these cache files directly.
+
+One cache JSON file is produced per vector store, named after the collection
+(e.g. ``artifacts/vectorstores/caches/meld_iemocap_hybrid_7.json``).
+
+Usage::
+
+    # Cache a single vector store
+    python -m src.vectorstore.caching.cache_similar_utterances \\
+        --vectorstore_name meld_iemocap_hybrid_7 --top_n 10
+
+    # Cache all uncached vector stores
+    python -m src.vectorstore.caching.cache_similar_utterances --top_n 10
+"""
+
 import os
 import argparse
 
@@ -26,6 +49,23 @@ def get_vectordb_instance(path_to_db):
 
 
 def get_query(group_df, turn_idx, window_size=None, type="single"):
+    """Build the similarity-search query string for a given utterance.
+
+    Args:
+        group_df (pd.DataFrame): Dialogue DataFrame with ``"speaker"`` and
+            ``"utterance"`` columns.
+        turn_idx (int): Zero-based turn index within the dialogue.
+        window_size (int, optional): Number of utterances in the context
+            window; required for ``"flow"`` and ``"hybrid"`` types.
+        type (str): Store type — ``"single"``, ``"flow"``, or ``"hybrid"``.
+
+    Returns:
+        str: Query string formatted to match the document style of the
+            target vector store.
+
+    Raises:
+        Exception: If ``type`` is not recognised.
+    """
     # print(f"len group_df is :{len(group_df)} and turn_idx is: {turn_idx}")
     if type == "single":
         row = group_df.iloc[turn_idx]
@@ -49,6 +89,23 @@ def get_query(group_df, turn_idx, window_size=None, type="single"):
 
 
 def get_sim_utterance_idx(db, query, top_n, idx=None, valid_emotions=None):
+    """Retrieve the top-N similar utterance indices for a query.
+
+    Searches the top-50 results in the vector store and filters out
+    documents from the same dialogue as the query utterance.
+
+    Args:
+        db (Chroma): The ChromaDB instance to search.
+        query (str): The query string.
+        top_n (int): Maximum number of results to return.
+        idx (str, optional): Index of the query utterance, used to exclude
+            same-dialogue results.
+        valid_emotions (set[str], optional): If provided, only return
+            results whose ``final_emotion`` metadata is in this set.
+
+    Returns:
+        list[str]: Up to ``top_n`` utterance index strings.
+    """
     out = db.similarity_search(query, k=50)
     if valid_emotions:
         out_idx = [o.metadata["idx"] for o in out if o.metadata["final_emotion"] in valid_emotions]
@@ -90,6 +147,14 @@ def get_sim_utterance_idx_for_benchmark_datasets(db, top_n, db_type, window_size
     return similar_utterance_idx
 
 def cache_similar_utterances(vectorstore_name, top_n):
+    """Cache similarity results for one or all vector stores.
+
+    Args:
+        vectorstore_name (str | None): Name of the vector store to cache
+            (e.g. ``"meld_iemocap_hybrid_7"``).  If ``None``, all stores
+            that do not yet have a cache file are processed.
+        top_n (int): Number of similar utterances to store per query.
+    """
     if vectorstore_name is None:
         vectorstore_names = next(os.walk(paths.VECTORSTORE_DB_DIR))[1]
         os.makedirs(paths.VECTORSTORE_CACHE_DIR, exist_ok=True)

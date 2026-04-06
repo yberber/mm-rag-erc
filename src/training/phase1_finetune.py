@@ -1,3 +1,20 @@
+"""Phase 1 fine-tuning: speaker-characteristic injection.
+
+Fine-tunes the base LLM to predict short commonsense descriptions of a
+speaker's state (listener reaction, mental state, or intention) given the
+conversation history and audio features.  This phase injects world knowledge
+and contextual reasoning into the model before the emotion-recognition task.
+
+The Phase 1 trainer uses the ``SPEAKER_CHARACTERISTICS_EXTRACTION_TEMPLATE``
+prompt and trains on the JSONL files produced by
+``src/training_data_creation/phase1/build_dataset.py``.
+
+Usage::
+
+    python -m src.training.phase1_finetune [--dataset both] [--epochs 4] \\
+        [--lora_r 16] [--use_qlora true]
+"""
+
 import os
 
 from src.helper import utils

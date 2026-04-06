@@ -1,3 +1,25 @@
+"""Abstract base class and shared argument parser for Phase 1 and Phase 2 trainers.
+
+:class:`BaseTrainer` encapsulates all training logic that is common to both
+fine-tuning phases:
+
+- Argument parsing (from CLI or config dict) with per-subclass defaults.
+- Tokenizer and model loading with optional QLoRA (4-bit) quantisation.
+- LoRA adapter creation (Phase 1) or warm-starting from a Phase 1 adapter
+  (Phase 2) via PEFT.
+- Tokenisation pipeline with prompt-masking so that loss is computed only
+  on the output tokens.
+- Hugging Face ``Trainer`` configuration with early stopping, learning-rate
+  scheduling, and automatic checkpoint resumption.
+- Final adapter saving and training-metric export.
+
+Subclasses must implement:
+
+- :meth:`_get_default_args` — return phase-specific hyperparameter defaults.
+- :meth:`get_prompt_template` — return the prompt template string.
+- :meth:`get_raw_datasets` — load and return the raw ``DatasetDict``.
+"""
+
 import argparse
 import os
 from pathlib import Path
@@ -14,8 +36,15 @@ from src.config import paths, constants
 
 
 
-
 def get_base_parser():
+    """Create and return the shared argument parser for all training phases.
+
+    Returns:
+        argparse.ArgumentParser: Parser with ``add_help=False`` containing
+            all shared hyperparameters (paths, LoRA settings, training
+            schedule, etc.).  Subclasses can extend it with phase-specific
+            arguments or override defaults via :meth:`BaseTrainer._get_default_args`.
+    """
     """Gets the base argument parser with shared hyperparameters."""
     # We use add_help=False to allow subclasses to add their own help
     parser = argparse.ArgumentParser(description="Base Trainer Argument Parser", add_help=False)

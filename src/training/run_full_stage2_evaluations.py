@@ -1,3 +1,18 @@
+"""Runner script that evaluates all Phase 2 adapter checkpoints in sequence.
+
+Discovers every checkpoint directory under a given ``--finetuning_root``
+and calls :mod:`stage2_eval_parallel` as a subprocess for each one.
+Optionally also evaluates the base model without any adapter.
+
+Supports evaluating on MELD, IEMOCAP, or both datasets in a single run.
+
+Usage::
+
+    python -m src.training.run_full_stage2_evaluations \\
+        --finetuning_root artifacts/finetuning/STAGE1_2-DEFAULT-r16 \\
+        --dataset both --split test [--skip_base true]
+"""
+
 import os
 import glob
 import argparse
@@ -8,6 +23,17 @@ from src.config import constants
 
 
 def find_adapter_paths(finetuning_root: str):
+    """Recursively find all checkpoint directories under a fine-tuning root.
+
+    Matches directories named ``checkpoint-*`` (intermediate checkpoints
+    saved during training).
+
+    Args:
+        finetuning_root (str): Root directory to search.
+
+    Returns:
+        list[str]: Sorted list of absolute checkpoint directory paths.
+    """
     """
     Find all adapter directories under `finetuning_root`.
 

@@ -1,3 +1,19 @@
+"""Assemble the Phase 1 fine-tuning dataset (JSONL) from speaker-characteristic annotations.
+
+Reads the largest available speaker-characteristics JSON file produced by
+:mod:`parallel_character_extraction`, cross-references it with the final
+benchmark CSV to keep only rows that have no missing features, and writes
+per-split JSONL files to ``data/training/stage1/<DATASET>/``.
+
+Each JSONL line contains the fields ``inputs``, ``iden``, and ``output``
+(the generated speaker-characteristic text that serves as the training
+target for Phase 1).
+
+Usage::
+
+    python src/training_data_creation/phase1/build_dataset.py
+"""
+
 from datasets import splits
 
 from src.helper import utils
