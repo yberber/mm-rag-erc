@@ -172,6 +172,15 @@ pip install -r requirements.txt
 
 ---
 
+## Dataset Acquisition
+
+To run this framework, you must download the raw benchmark datasets. Please note that the links provided are valid as of April 20, 2026.
+
+* **MELD Dataset:** The dataset can be downloaded directly from the official project page at [https://affective-meld.github.io/](https://affective-meld.github.io/).
+* **IEMOCAP Dataset:** To access this dataset, you must accept the strict license conditions and submit the release form available at [https://sail.usc.edu/iemocap/iemocap_release.htm](https://sail.usc.edu/iemocap/iemocap_release.htm). Once access is granted after sending the form (generally within a week), you will receive the download link via email.
+
+---
+
 ## Configuration
 
 Edit `src/config/paths.py` and set the two raw-data paths at the top of the file:

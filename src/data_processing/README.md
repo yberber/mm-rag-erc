@@ -1,5 +1,9 @@
 # src/data_processing
 
+
+> **Note on Dataset Acquisition:** Before running these processing scripts, you must download the raw MELD and IEMOCAP datasets. Please refer to the **Dataset Acquisition** section in the [root README](../../README.md) for the download links and access conditions.
+> 
+> 
 Scripts that transform raw MELD and IEMOCAP downloads into the final benchmark CSVs consumed by all downstream steps.
 
 Run the scripts in the order listed below.
